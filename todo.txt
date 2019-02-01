@@ -1,0 +1,29 @@
+TODO
+
+* audio
+* splash screen
+* upgrades
+* suspension
+* stages
+* feuerwand
+* schnelle beschleunigung
+
+NEU
+* button auf ganzen bildschirm tap bereich
+* gameover bei berührung
+
+NEU 2 01.02.19
+* coins spawn
+* level als tile file oder jeden tag neu?
+* geld im spiel
+* motorrauch
+* firewall geneauer machen polys?
+* feuer animieren
+
+langfristig
+* bessere physik
+* upgrades
+* autos
+* level
+* jeden tag neues level
+* items
