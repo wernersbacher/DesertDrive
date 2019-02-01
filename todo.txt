@@ -5,8 +5,6 @@ TODO
 * upgrades
 * suspension
 * stages
-* feuerwand
-* schnelle beschleunigung
 
 NEU
 * button auf ganzen bildschirm tap bereich

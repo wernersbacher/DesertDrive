@@ -38,6 +38,7 @@ local startOffset = 0
 local score = 0
 local score_text
 local highscore_text
+local car_hp = 4000
 
 local stats = statMgr.load()
 
@@ -123,7 +124,7 @@ function rotateCar(rotateForward)
 end
 
 function accel(ac, max)
-	local f = 6
+	local f = 6 * ( 1 + 1/stage )
 	--gas geben
 	local maxSpeed = max or 720 * f
 	local acceleration = val or 35 * f
@@ -294,6 +295,7 @@ function createHill()
 	top_margin = top_margin - funcs.topMarginLeft(imageOutline, hillw, hillh)
 	
 	local newHill = display.newImageRect(world, hill_sheet[type][stage], j, hillw, hillh )
+	newHill.name = "hill"
 	newHill.anchorX = 0
 	newHill.anchorY = 0
 	newHill.x = spawnX + left_margin 
@@ -366,36 +368,68 @@ function checkHills()
 end
 
 
-function onCarCollision( self, event )
+function onFireCollision( self, event )
 	if stopped then
 		return 
 	end
  
     if ( event.phase == "began" and event.other.name ~= nil and event.other.name == "carShape") then
-        print( "Gameover!!" )
+		print( "Gameover!!" )
+		setGameOver()
  
 	elseif ( event.phase == "ended" ) then
 		if event.other.name ~= nil then 
 			print( self.name .. ": collision ended with " .. event.other.name )
 			-- Collision.
-
-			stopped = true
-			transition.fadeIn( gameover, { time=2000 } )
-			transition.fadeOut( gui, { time=500 } )
-			
-			
-			local gTimer = timer.performWithDelay( 3000, function()  
-				if stopped then
-					physics.pause()
-				end  
-			end )
-			table.insert(timerTable, gTimer)
-
 		end
         
     end
 end
 
+
+function onCarCollision(self, event) 
+	if stopped then
+		return 
+	end
+
+	if ( event.phase == "began" and event.other.name ~= nil and event.other.name == "hill") then
+        print( "Touchiiing" )
+	end
+end
+
+
+local function onPostCollision( self, event )
+	if stopped then
+		return 
+	end
+	--car_hp
+	if ( event.force > 10.0 and event.other.name ~= nil and event.other.name == "hill") then
+		--print( "force: " .. event.force )
+		--print( "friction: " .. event.friction )
+
+		car_hp = car_hp - event.force
+		if car_hp <= 0 then
+			setGameOver()
+		end
+		print(car_hp)
+	end
+end
+
+function setGameOver() 
+
+	stopped = true
+	transition.fadeIn( gameover, { time=2000 } )
+	transition.fadeOut( gui, { time=500 } )
+	
+	
+	local gTimer = timer.performWithDelay( 3000, function()  
+		if stopped then
+			physics.pause()
+		end  
+	end )
+	table.insert(timerTable, gTimer)
+
+end
 
 --[[
 	SCENE FUNCTIONS
@@ -476,7 +510,7 @@ function scene:create( event )
 	physics.start()
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
-	physics.setDrawMode("hybrid")
+	--physics.setDrawMode("hybrid")
 	physics.pause()
 	
 	-- BACKGROUND
@@ -498,7 +532,7 @@ function scene:create( event )
 
 
 	-- CAR
-	local car_scale = 0.4
+	local car_scale = 0.43
 
 	local dens = 100
 
@@ -710,7 +744,12 @@ function scene:show( event )
 		
 		-- collision detection
 		
-		fire_sprite.collision = onCarCollision
+		--carShape.collision = onCarCollision
+		--carShape:addEventListener("collision")
+		carShape.postCollision = onPostCollision
+		carShape:addEventListener( "postCollision" )
+
+		fire_sprite.collision = onFireCollision
 		fire_sprite:addEventListener( "collision" )
 		
 		physics.start()
