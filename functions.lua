@@ -83,11 +83,21 @@ function goToSc(name)
 	})
 end
 
+function round(number)
+    if (number - (number % 0.1)) - (number - (number % 1)) < 0.5 then
+      number = number - (number % 1)
+    else
+      number = (number - (number % 1)) + 1
+    end
+   return number
+  end
+
 M.printt = printt
 M.topMarginRight = topMarginRight
 M.topMarginLeft = topMarginLeft
 M.printMemUsage = printMemUsage
 M.scaleOutline = scaleOutline
 M.goToSc = goToSc
+M.round = round
  
 return M

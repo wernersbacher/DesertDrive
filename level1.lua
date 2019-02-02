@@ -12,13 +12,16 @@ local tiles = require "tiles"
 local scene = composer.newScene()
 local hills = require("levels.lvl1")
 local physics = require "physics"
+local json = require( "json" )
 
+local CBE = require("CBE.CBE")
 
 composer.removeScene("tryagain");
 
 -- const
 
 local ppm = 30
+local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
 
 -- game groups
 local car = display.newGroup()
@@ -38,7 +41,8 @@ local startOffset = 0
 local score = 0
 local score_text
 local highscore_text
-local car_hp = 4000
+local car_hp = 1000
+local max_hp = 1000
 
 local stats = statMgr.load()
 
@@ -53,6 +57,11 @@ local timerTable = {}
 
 -- sound
 local menuSound
+local soundTable = {
+ 
+    engine_zero = audio.loadSound( "sounds/engine.wav" ),
+    engine = audio.loadSound( "sounds/engine_loop.mp3" ),
+}
 
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
@@ -76,6 +85,8 @@ function goToSc(name)
 	for k, v in pairs(timerTable) do
 		timer.cancel( v )
 	end
+
+	smokeVent._cbe_reserved.destroy()
 
 	composer.gotoScene("tryagain", {
 		effect = "fade",
@@ -118,13 +129,13 @@ end
 function rotateCar(rotateForward) 
 	local rotateAcc = 7
 	local f = -1
-	if(rotateForward) then f = -1 end
+	if(rotateForward) then f = 1 end
 
 	carShape.angularVelocity = carShape.angularVelocity+ f*rotateAcc
 end
 
 function accel(ac, max)
-	local f = 6 * ( 1 + 1/stage )
+	local f = 5 * ( 1 + stage/10 )
 	--gas geben
 	local maxSpeed = max or 720 * f
 	local acceleration = val or 35 * f
@@ -169,16 +180,17 @@ local oldy = display.actualContentHeight/3 * 2
 local frames = 0
 
 function onFrame() 
+	
 	if(stopped == true) then
 		return
 	end
 
 	if(throttle == 1) then
 		accel()
-		--rotateCar()
+		rotateCar()
 	elseif(throttle == -1) then
 		decel()
-		--rotateCar(true)
+		rotateCar(true)
 	end
 
 	-- moving the "camera"
@@ -187,11 +199,23 @@ function onFrame()
 
 	local deltaY = carShape.y - oldy
 	oldy = carShape.y
-	fire_sprite.y = carShape.y -- move fire wall with car height
+	--fire_sprite.y = carShape.y -- move fire wall with car height
+	fireBlock.y = carShape.y
+	fireEmitter.x = fireBlock.x
+	fireEmitter.y = carShape.y -30
+
+	
 
 	world:translate( -deltaX, -deltaY )
 	car:translate( -deltaX, -deltaY )
 	-- camera END
+
+	--particle creating (hp)
+	
+	smokeVent.emitX = carShape.x
+	smokeVent.emitY = carShape.y
+
+	--particle end
 
 	-- every 1 seconds check hills
 	if(frames % 4 == 0) then
@@ -215,10 +239,14 @@ function go(event)
 
     if ( "began" == phase ) then
 		--timer.resume(touchLooper)
-		throttle = 1;
+		throttle = 1;		
+		
+		--print(al.Source(source, al.PITCH, 2.5))
+
     elseif ("ended" == phase or "cancelled" == phase ) then
 		--timer.pause(touchLooper)
 		throttle = 0
+		--al.Source(source, al.PITCH, 1)
     end
 
     return true; -- no touch propagation
@@ -249,6 +277,16 @@ function brake(event)
 	--wheel1:applyTorque( 50 )
 end
 
+--[[
+	economy/money
+]]
+
+function addMoney(mon) 
+	stats.money = stats.money + mon
+
+	moneyTxt.text = "$".. stats.money
+end
+
 
 --[[
 	LEVEL FUNCTIONS
@@ -266,7 +304,7 @@ end
 	local scale_hill = 1
 	local already_driven = 0
 
-	local stage = 1
+	stage = 1
 
 	local hillw = 200
 	local hillh = 200
@@ -337,6 +375,7 @@ function createHill()
 		hillh = tiles.stages[stage].height 
 
 		stats.money = stats.money + 100
+		addMoney(100)
 	end
 
 
@@ -403,28 +442,43 @@ local function onPostCollision( self, event )
 		return 
 	end
 	--car_hp
-	if ( event.force > 10.0 and event.other.name ~= nil and event.other.name == "hill") then
+	if ( event.force > 35.0 and event.other.name ~= nil and event.other.name == "hill") then
 		--print( "force: " .. event.force )
 		--print( "friction: " .. event.friction )
 
 		car_hp = car_hp - event.force
+
+		--smokeVent.alpha = (max_hp-car_hp)/max_hp
+		local alpha = 0.07 * (max_hp-car_hp)/max_hp 
+		smokeVent.startAlpha = alpha
+		smokeVent.endAlpha = alpha
+		smokeVent.lifeAlpha = alpha
+
 		if car_hp <= 0 then
 			setGameOver()
+			car_hp = 0
 		end
-		print(car_hp)
+		hptxt.text = funcs.round(car_hp) .. " Struktur"
 	end
 end
 
-function setGameOver() 
+local stillRunning = false
 
-	stopped = true
+function setGameOver() 
+	stillRunning = true
 	transition.fadeIn( gameover, { time=2000 } )
 	transition.fadeOut( gui, { time=500 } )
+
+	
+	smokeVent.stop()
+	
 	
 	
 	local gTimer = timer.performWithDelay( 3000, function()  
-		if stopped then
+		if stillRunning then
 			physics.pause()
+			stopped = true
+			fireEmitter:pause()
 		end  
 	end )
 	table.insert(timerTable, gTimer)
@@ -464,8 +518,14 @@ function scene:create( event )
 	end]]
 
 	--[[
+		PARTICLE SYSTEM
+	]]
+
+
+	--[[
 		LOAD IMAGE SHEETS
 	]]
+	
 
 	-- IMAGE TILES
 	for i = 1, #tiles.stages, 1 do
@@ -512,9 +572,9 @@ function scene:create( event )
 	physics.setGravity( 0, 28 )
 	--physics.setDrawMode("hybrid")
 	physics.pause()
-	
+
 	-- BACKGROUND
-	local background = display.newImageRect( "img/background.png", display.actualContentWidth, display.actualContentHeight )
+	local background = display.newImageRect( "img/background2.png", display.actualContentWidth, display.actualContentHeight )
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x = 0 + display.screenOriginX 
@@ -545,6 +605,7 @@ function scene:create( event )
 	carShape.linearDamping = 0.5
 
 	carShape.name = "carShape"
+
 
 
 	local carX = carShape.x
@@ -620,6 +681,42 @@ function scene:create( event )
 	-- Register to call t's timer method an infinite number of times
 	--local timer.performWithDelay( 1000, t, 0 )
 
+	-- SOUNDS
+
+	--_, source = audio.play(soundTable["engine"], {channel = 1, loops = -1})
+	audio.setVolume( 0.7, { channel=1 } )
+
+
+	-- PARTICLES
+
+	smokeVent = CBE.newVent({
+		--preset = "burn",
+
+		positionType = "inRadius", -- Add a bit of randomness to the position
+		build = function() local size = math.random(50, 150) return display.newImageRect("img/particle.png", size, size) end,
+		rotateTowardVel = true,
+		--towardVelOffset = 90,
+		lifeTime = 100,
+		color = {{0.54}, {0.47}, {0.39}, {0.31}},
+		startAlpha = 0.0,
+		endAlpha = 0.0,
+		lifeAlpha = 0.0,
+		physics = {
+			angles = {{80, 100}},
+			scaleRateX = 0.98,
+			scaleRateY = 0.98,
+			gravityY = -0.05
+		}
+	})
+
+	car:insert(smokeVent)
+	
+	smokeVent:start()
+
+	smokeVent.emitX = carShape.x
+	smokeVent.emitY = carShape.y
+	--smokeVent.alpha = 0
+
 
 	-- FIRE 
 
@@ -638,15 +735,28 @@ function scene:create( event )
 		loopCount = 0,   -- Optional ; default is 0 (loop indefinitely)
 		loopDirection = "bounce"    -- Optional ; values include "forward" or "bounce"
 	}
-	local fire_shape = {0,-400, 240,-300, 340,0, 240,300, 0,400, -240,300, -430,0, -240, 300, }
+
+--[[	local fire_shape = {0,-400, 240,-300, 340,0, 240,300, 0,400, -240,300, -430,0, -240, 300, }
 
 	fire_sprite = display.newSprite(world, fire_sheet, sequenceData)
 	physics.addBody(fire_sprite, "kinematic", { shape= fire_shape })
 	fire_sprite.y = carShape.y	-- spawn height
 	fire_sprite.x = -2000
 	fire_sprite.name = "fire"
-	fire_sprite:setLinearVelocity( 300, 0 )
+	fire_sprite:setLinearVelocity( 300, 0 ) ]]
 
+	local fireSpawn = -1000
+
+	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
+	physics.addBody(fireBlock, "kinematic" )
+	fireBlock.name = "fire"
+	fireBlock.alpha = 0
+	fireBlock:setLinearVelocity( 300, 0 )
+	
+	fireEmitter = display.newEmitter( _firewall )
+	fireEmitter.x = fireSpawn
+	fireEmitter.y = carShape.y -30
+	world:insert(fireEmitter)
 
 	-- BUTTONS
 	back = display.newImageRect(gui, "img/gui/brake.png", 256, 256 )
@@ -678,6 +788,11 @@ function scene:create( event )
 	-- TEXT & HIGHSCORE
 	score_text = display.newText( gui, "0m", display.contentCenterX, 100, native.systemFont, 54 )
 	highscore_text = display.newText( gui, stats.highscore .."m", display.contentCenterX, 180, native.systemFont, 44 )
+
+	-- MONEY
+
+	moneyTxt = display.newText(gui, "$".. stats.money, 1024, 100, native.systemFont, 54 )
+	hptxt = display.newText(gui, car_hp .. " Struktur", 1024, 180, native.systemFont, 44 )
 
 
 	-- GAMEOVER ZEUG
@@ -749,8 +864,8 @@ function scene:show( event )
 		carShape.postCollision = onPostCollision
 		carShape:addEventListener( "postCollision" )
 
-		fire_sprite.collision = onFireCollision
-		fire_sprite:addEventListener( "collision" )
+		fireBlock.collision = onFireCollision
+		fireBlock:addEventListener( "collision" )
 		
 		physics.start()
 

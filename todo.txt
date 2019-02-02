@@ -8,15 +8,15 @@ TODO
 
 NEU
 * button auf ganzen bildschirm tap bereich
-* gameover bei berührung
 
 NEU 2 01.02.19
 * coins spawn
-* level als tile file oder jeden tag neu?
-* geld im spiel
-* motorrauch
-* firewall geneauer machen polys?
-* feuer animieren
+* bessere leveldesign
+
+particles
+* explosion kaputt
+* sparks
+* himmel
 
 langfristig
 * bessere physik

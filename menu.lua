@@ -13,6 +13,7 @@ local statMgr = require "stats"
 -- include Corona's "widget" library
 local widget = require "widget"
 
+
 --------------------------------------------
 
 
@@ -53,6 +54,11 @@ function scene:create( event )
 	titleLogo.x = display.contentCenterX
 	titleLogo.y = 100
 	
+	-- create/position logo/title image on upper-half of the screen
+	local car = display.newImageRect("img/car/car-full.png", 691, 275)
+	car.x = 100
+	car.y = display.contentCenterY
+
 	moneyTxt = display.newText("$".. stats.money, display.contentCenterX, 200, native.systemFont, 54 )
 
 	-- create a widget button (which will loads level1.lua on release)
@@ -79,6 +85,8 @@ function scene:create( event )
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background )
+	
+	sceneGroup:insert( car )
 	sceneGroup:insert( moneyTxt )
 	sceneGroup:insert( titleLogo )
 	sceneGroup:insert( playBtn )
