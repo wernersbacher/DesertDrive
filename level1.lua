@@ -21,7 +21,11 @@ composer.removeScene("tryagain");
 -- const
 
 local ppm = 30
+local preLoadNum = 15
 local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
+
+-- textes
+
 
 -- game groups
 local car = display.newGroup()
@@ -37,12 +41,12 @@ local background, carShape, forward, back, tryagain;
 local throttle = 0
 
 --game vars
+local gameoverStatus = false
 local startOffset = 0
 local score = 0
 local score_text
 local highscore_text
-local car_hp = 1000
-local max_hp = 1000
+local car_hp, max_hp = 4000, 4000
 
 local stats = statMgr.load()
 
@@ -50,7 +54,7 @@ local stats = statMgr.load()
 local stopped = false
 local hill_sheet = {normal = {}, special = {}}
 local hill_outlines = { normal = {}, special = {}}
-local fire_sprite
+local stageTrigger = {}
 
 -- timer to stop when leaving scene
 local timerTable = {}
@@ -127,7 +131,7 @@ end
 ]]
 
 function rotateCar(rotateForward) 
-	local rotateAcc = 7
+	local rotateAcc = 8
 	local f = -1
 	if(rotateForward) then f = 1 end
 
@@ -178,6 +182,7 @@ local oldx = 0
 local oldy = display.actualContentHeight/3 * 2
 
 local frames = 0
+local triggerCounter = 1
 
 function onFrame() 
 	
@@ -199,7 +204,7 @@ function onFrame()
 
 	local deltaY = carShape.y - oldy
 	oldy = carShape.y
-	--fire_sprite.y = carShape.y -- move fire wall with car height
+	 -- move fire wall with car height
 	fireBlock.y = carShape.y
 	fireEmitter.x = fireBlock.x
 	fireEmitter.y = carShape.y -30
@@ -217,15 +222,36 @@ function onFrame()
 
 	--particle end
 
-	-- every 1 seconds check hills
-	if(frames % 4 == 0) then
-		checkHills()
+	-- check if new stage reached
+	-- upgrade
+	if stageTrigger[triggerCounter] ~= nil and stageTrigger[triggerCounter] > 0 and carShape.x > stageTrigger[triggerCounter] then
+		addMoney(100)
+		--local x, y = fireBlock:getLinearVelocity()
+		--fireBlock:setLinearVelocity(x*1.7, 0)
+		triggerCounter = triggerCounter +1
 	end
 
+	-- every 4 frames check hills
+	if(frames % 4 == 0) then
+		checkHills()
+
+		if fireBlock.x + 2000 > carShape.x then
+			fireWarning.isVisible = true
+		else
+			fireWarning.isVisible = false
+		end
 
 	-- score updating
-	score = math.round(carShape.x/ppm)
-	score_text.text =  score.. "m"
+		score = math.round(carShape.x/ppm)
+		score_text.text =  score.. "m"
+	end
+	
+	if frames % 60 == 0 then
+		local x, y = fireBlock:getLinearVelocity()
+		fireBlock:setLinearVelocity(x*1.03, 0)
+	end
+	
+	-- score updating
 	--score_text.text = display.fps .. " FPS"
 
 	frames = frames + 1
@@ -305,9 +331,12 @@ end
 	local already_driven = 0
 
 	stage = 1
+	stageCount = 1
 
 	local hillw = 200
 	local hillh = 200
+	local hillscaler = 1
+	local nextStageTrigger = 0
 
 function createHill()
 	local magicn = rand(1,100)
@@ -320,16 +349,17 @@ function createHill()
 	--if special tiles, and magic, then build a special one
 		--print(magicn)
 		
+	-- würfeln von j, welches das teil ist	
 	if(magicn<10 and stg.special>0) then
 		type = "special"
 		j = rand(stg.special)
 	end
 
-	--next stage after x metres
-	--funcs.printt(stage)
+	print("spawning: " .. stage)
 
+	--hill outline poly
 	local imageOutline = hill_outlines[type][stage][j]
-	--funcs.printt(imageOutline)
+	-- spawnverschiebung
 	top_margin = top_margin - funcs.topMarginLeft(imageOutline, hillw, hillh)
 	
 	local newHill = display.newImageRect(world, hill_sheet[type][stage], j, hillw, hillh )
@@ -355,10 +385,8 @@ function createHill()
 	hill_bottom:setFillColor(stg.color[1], stg.color[2], stg.color[3])
 	--hill_bottom:setFillColor(0.1, 0.2, 0.3)
 
-	--table.insert(loaded_elements, newHill)
 	loaded_elements[#loaded_elements+1] = newHill
 	hill_bottoms[#hill_bottoms+1] = hill_bottom
-	--bg_elements[#bg_elements+1] = bg_hill
 
 	left_margin = left_margin + hillw
 
@@ -367,17 +395,35 @@ function createHill()
 		
 	-- upgrade stage?
 	--print("stage: " .. stage .. " driven: ".. already_driven .. ", carshape.x: ".. carShape.x .. ", stg ende:"..stg.ende)
-	if(carShape.x > already_driven + stg.ende and #tiles.stages > stage) then
-		print ("upgrade stage!  - "..hillw.. " - "..hillh)
-		already_driven = already_driven + stg.ende
+	if(stageCount >= stg.count
+		--and carShape.x > already_driven + stg.width*stg.count - (display.actualContentWidth - 0)
+		and #tiles.stages > stage
+	) 
+		
+		then
+		--print ("upgrade stage! "..carShape.x.. " > "..already_driven.. " + " .. stg.width*stg.count .. " - ".. display.actualContentWidth .. " count: ".. stg.count)
+
+		already_driven = already_driven + stg.width*stg.count
+		stageCount = 0 
 		stage = stage + 1
 		hillw = tiles.stages[stage].width
 		hillh = tiles.stages[stage].height 
+		--hillscaler = tiles.stages[stage].scaler
+		
 
-		stats.money = stats.money + 100
-		addMoney(100)
+		nextStageTrigger = nextStageTrigger + stg.width*stg.count
+		table.insert(stageTrigger, nextStageTrigger)
+		--print (carShape.x .. " < " .. nextStageTrigger)
+
+		--funcs.printt(stageTrigger)
+
+	--elseif #tiles.stages <= stage then
+
+		
+		
 	end
 
+	stageCount = stageCount + 1
 
 end
 
@@ -395,7 +441,7 @@ end
 
 function checkHills() 
 
-	while(#loaded_elements-20 < 1 or carShape.x > loaded_elements[#loaded_elements-20].x) do
+	while(#loaded_elements-preLoadNum < 1 or carShape.x > loaded_elements[#loaded_elements-preLoadNum].x) do
 		createHill()
 	end
 
@@ -408,7 +454,7 @@ end
 
 
 function onFireCollision( self, event )
-	if stopped then
+	if gameoverStatus then
 		return 
 	end
  
@@ -427,7 +473,7 @@ end
 
 
 function onCarCollision(self, event) 
-	if stopped then
+	if gameoverStatus then
 		return 
 	end
 
@@ -438,7 +484,7 @@ end
 
 
 local function onPostCollision( self, event )
-	if stopped then
+	if gameoverStatus then
 		return 
 	end
 	--car_hp
@@ -465,14 +511,14 @@ end
 local stillRunning = false
 
 function setGameOver() 
+	gameoverStatus = true
+	throttle = 0
 	stillRunning = true
 	transition.fadeIn( gameover, { time=2000 } )
 	transition.fadeOut( gui, { time=500 } )
 
 	
 	smokeVent.stop()
-	
-	
 	
 	local gTimer = timer.performWithDelay( 3000, function()  
 		if stillRunning then
@@ -736,22 +782,13 @@ function scene:create( event )
 		loopDirection = "bounce"    -- Optional ; values include "forward" or "bounce"
 	}
 
---[[	local fire_shape = {0,-400, 240,-300, 340,0, 240,300, 0,400, -240,300, -430,0, -240, 300, }
-
-	fire_sprite = display.newSprite(world, fire_sheet, sequenceData)
-	physics.addBody(fire_sprite, "kinematic", { shape= fire_shape })
-	fire_sprite.y = carShape.y	-- spawn height
-	fire_sprite.x = -2000
-	fire_sprite.name = "fire"
-	fire_sprite:setLinearVelocity( 300, 0 ) ]]
-
 	local fireSpawn = -1000
 
 	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
 	physics.addBody(fireBlock, "kinematic" )
 	fireBlock.name = "fire"
 	fireBlock.alpha = 0
-	fireBlock:setLinearVelocity( 300, 0 )
+	fireBlock:setLinearVelocity(300, 0)
 	
 	fireEmitter = display.newEmitter( _firewall )
 	fireEmitter.x = fireSpawn
@@ -793,6 +830,13 @@ function scene:create( event )
 
 	moneyTxt = display.newText(gui, "$".. stats.money, 1024, 100, native.systemFont, 54 )
 	hptxt = display.newText(gui, car_hp .. " Struktur", 1024, 180, native.systemFont, 44 )
+
+	-- WARNING FIRE
+
+	fireWarning = display.newImageRect(gui, "img/fire_behind.png", 545*2, 50*2)
+	fireWarning.x = display.contentCenterX
+	fireWarning.y = 300
+	transition.blink( fireWarning, { time=500 } )
 
 
 	-- GAMEOVER ZEUG

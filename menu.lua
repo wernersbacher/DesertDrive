@@ -54,9 +54,10 @@ function scene:create( event )
 	titleLogo.x = display.contentCenterX
 	titleLogo.y = 100
 	
-	-- create/position logo/title image on upper-half of the screen
-	local car = display.newImageRect("img/car/car-full.png", 691, 275)
-	car.x = 100
+	-- auto anzeige
+	local f = 0.6
+	local car = display.newImageRect("img/car/car-full.png", 691*f, 275*f)
+	car.x = -100
 	car.y = display.contentCenterY
 
 	moneyTxt = display.newText("$".. stats.money, display.contentCenterX, 200, native.systemFont, 54 )
