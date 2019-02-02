@@ -92,6 +92,11 @@ function round(number)
    return number
   end
 
+
+function sigmoid(x)
+    return 1/(1 + math.exp(-x))
+end
+
 M.printt = printt
 M.topMarginRight = topMarginRight
 M.topMarginLeft = topMarginLeft
@@ -99,5 +104,6 @@ M.printMemUsage = printMemUsage
 M.scaleOutline = scaleOutline
 M.goToSc = goToSc
 M.round = round
+M.sigmoid = sigmoid
  
 return M

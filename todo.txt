@@ -12,9 +12,10 @@ NEU
 NEU 2 01.02.19
 * coins spawn
 * bessere leveldesign
-* preloading verbessern
 * mehr töne
-* feuer geschwindigkeit sigmoid
+--* kamera ändern
+* jump button
+* mute button
 
 particles
 * explosion kaputt

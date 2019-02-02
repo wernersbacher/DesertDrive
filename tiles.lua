@@ -26,6 +26,18 @@ table.insert(stages, {
     special = 0
 })
 
+table.insert(stages, {
+    name = "quick",
+    width = 1000,
+    height = 600,
+    scaler = 1,
+    count = 25,
+    ende = 30 * 5000,
+    color = {127/255, 61/255, 61/255},
+    num = 3,
+    special = 3
+})
+
 
 table.insert(stages, {
     name = "desert1",

@@ -26,6 +26,8 @@ local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", sys
 
 local _maxSpeed = 720
 local _maxAcc = 35
+local smokeAlpha = 0.07
+local maxFireSpeed = 600
 
 -- textes
 
@@ -49,7 +51,7 @@ local startOffset = 0
 local score = 0
 local score_text
 local highscore_text
-local car_hp, max_hp = 4000, 4000
+local car_hp, max_hp = 5000, 5000
 
 local stats = statMgr.load()
 
@@ -68,7 +70,8 @@ local soundTable = {
  
     engine_zero = audio.loadSound( "sounds/engine.wav" ),
     engine = audio.loadSound( "sounds/engine_loop2.mp3" ),
-    jeep = audio.loadSound( "sounds/jeep.mp3" ),
+	jeep = audio.loadSound( "sounds/jeep2.mp3" ),
+	check_fire = audio.loadStream("sounds/check_fire.mp3")
 }
 
 -- forward declarations and other locals
@@ -95,7 +98,8 @@ function goToSc(name)
 	end
 
 	smokeVent._cbe_reserved.destroy()
-	audio.stop();
+	
+	audio.stop({ channel=1 })
 
 	composer.gotoScene("tryagain", {
 		effect = "fade",
@@ -141,7 +145,7 @@ function pitchEngine()
 	local max = max.maxForwardSpeed
 	--local acceleration = max.maxForwardAccel
 	local cur = math.min( math.abs(wheel[1].angularVelocity), max) -- entweder absolut wert von current, aber höchstens max
-	print(math.abs(wheel[1].angularVelocity))
+	
 	local pitch = 0.9 + 0.8*(cur/max)
 
 	al.Source(enginePitch, al.PITCH, pitch)
@@ -152,7 +156,7 @@ end
 ]]
 
 function rotateCar(rotateForward) 
-	local rotateAcc = 8
+	local rotateAcc = 12
 	local f = -1
 	if(rotateForward) then f = 1 end
 
@@ -212,10 +216,11 @@ end
 
 
 local oldx = 0
-local oldy = display.actualContentHeight/3 * 2
+local oldy = display.actualContentHeight/2
 
 local frames = 0
 local triggerCounter = 1
+local seconds = 0
 
 function onFrame() 
 	
@@ -285,6 +290,11 @@ function onFrame()
 	end
 	
 	if frames % 60 == 0 then
+		seconds = seconds +1
+		local x = seconds/10
+		local newSpeed = maxFireSpeed * funcs.sigmoid(x)
+
+
 		local x, y = fireBlock:getLinearVelocity()
 		fireBlock:setLinearVelocity(x*1.03, 0)
 	end
@@ -390,14 +400,13 @@ function createHill()
 		j = rand(stg.special)
 	end
 
-	print("spawning: " .. stage)
-
 	--hill outline poly
 	local imageOutline = hill_outlines[type][stage][j]
 	-- spawnverschiebung
 	top_margin = top_margin - funcs.topMarginLeft(imageOutline, hillw, hillh)
 	
 	local newHill = display.newImageRect(world, hill_sheet[type][stage], j, hillw, hillh )
+	--local newHill = display.newPolygon(world, spawnX + left_margin, spawnY + top_margin, imageOutline )
 	newHill.name = "hill"
 	newHill.anchorX = 0
 	newHill.anchorY = 0
@@ -523,14 +532,20 @@ local function onPostCollision( self, event )
 		return 
 	end
 	--car_hp
-	if ( event.force > 35.0 and event.other.name ~= nil and event.other.name == "hill") then
+	if ( event.force > 25.0 and event.other.name ~= nil and event.other.name == "hill") then
 		--print( "force: " .. event.force )
 		--print( "friction: " .. event.friction )
 
 		car_hp = car_hp - event.force
 
 		--smokeVent.alpha = (max_hp-car_hp)/max_hp
-		local alpha = 0.07 * (max_hp-car_hp)/max_hp 
+		
+		local f = 10000/max_hp -- wenn weniger hp da sind, muss der wert skaliert werden
+		local alphaFactor = 0.0014* 1.0007^((max_hp-car_hp)*f)
+		print(alphaFactor)
+		local alpha = smokeAlpha * alphaFactor --(max_hp-car_hp)/max_hp 
+		
+
 		smokeVent.startAlpha = alpha
 		smokeVent.endAlpha = alpha
 		smokeVent.lifeAlpha = alpha
@@ -548,7 +563,7 @@ local stillRunning = false
 function setGameOver() 
 	gameoverStatus = true
 	throttle = 0
-	audio.stop()
+	audio.stop({ channel=1 })
 	stillRunning = true
 	transition.fadeIn( gameover, { time=2000 } )
 	transition.fadeOut( gui, { time=500 } )
@@ -652,7 +667,7 @@ function scene:create( event )
 	physics.start()
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
-	--physics.setDrawMode("hybrid")
+	physics.setDrawMode("hybrid")
 	physics.pause()
 
 	-- BACKGROUND
@@ -766,7 +781,7 @@ function scene:create( event )
 	-- SOUNDS
 
 	_, enginePitch = audio.play(soundTable["jeep"], {channel = 1, loops = -1})
-	audio.setVolume( 0.4, { channel=1 } )
+	--audio.setVolume( 0.7, { channel=1 } )
 
 
 	-- PARTICLES
@@ -872,7 +887,7 @@ function scene:create( event )
 	fireWarning = display.newImageRect(gui, "img/fire_behind.png", 545*2, 50*2)
 	fireWarning.x = display.contentCenterX
 	fireWarning.y = 300
-	transition.blink( fireWarning, { time=500 } )
+	transition.blink( fireWarning, { time=1200 } )
 
 
 	-- GAMEOVER ZEUG
@@ -959,13 +974,7 @@ function scene:show( event )
 		
 		Runtime:addEventListener( "enterFrame", onFrame )
 		
-		--[[local pitchDesired = 2
-		 
-		local source = audio.play(menuSound)
-		timer.performWithDelay(5000, function() 
-			print("pitch")
-			al.Source(source, al.PITCH, 2.0)
-		end, 10)]]
+		audio.play(soundTable["check_fire"], {loop=0, channel=30})
 
 		
 	end

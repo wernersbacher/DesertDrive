@@ -9,10 +9,12 @@ local scene = composer.newScene()
 
 local funcs = require "functions"
 local statMgr = require "stats"
+local CBE = require("CBE.CBE")
 
 -- include Corona's "widget" library
 local widget = require "widget"
 
+local gameMusic = audio.loadStream("sounds/dude.mp3")
 
 --------------------------------------------
 
@@ -29,6 +31,8 @@ local function onPlayBtnRelease()
 	
 	-- go to level1.lua scene
 	--composer.gotoScene( "level1", "fade", 500 )
+	
+	bg_aura._cbe_reserved.destroy()
 	funcs.goToSc("level1")
 	
 	return true	-- indicates successful touch
@@ -43,12 +47,32 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	-- display a background image
-	local background = display.newImageRect( "background.jpg", display.actualContentWidth, display.actualContentHeight )
+	
+	
+	--local background = display.newImageRect( "background.jpg", display.actualContentWidth, display.actualContentHeight )
+	local background = display.newRect(0,0, display.actualContentWidth, display.actualContentHeight)
+	background.fill = { 0, 0, 0 }
 	background.anchorX = 0
 	background.anchorY = 0
 	background.x = 0 + display.screenOriginX 
 	background.y = 0 + display.screenOriginY
 	
+	bg_aura = CBE.newVent({
+		preset = "evil",
+		positionType = "inRect",
+		emitX = 0, emitY = 0,
+		rectWidth = display.actualContentWidth,
+		rectHeight = display.actualContentHeight,
+		rectLeft = display.screenOriginX , -- Left and top coordinates
+		rectTop = display.screenOriginY,
+		perEmit = 2,
+		inTime = 2000,
+		physics = {
+			velocity = 0
+		}
+	})
+	bg_aura:start()
+
 	-- create/position logo/title image on upper-half of the screen
 	local titleLogo = display.newImageRect("img/gui/logo.png", 639, 110)
 	titleLogo.x = display.contentCenterX
@@ -86,11 +110,15 @@ function scene:create( event )
 	
 	-- all display objects must be inserted into group
 	sceneGroup:insert( background )
+	sceneGroup:insert( bg_aura )
+	
 	
 	sceneGroup:insert( car )
 	sceneGroup:insert( moneyTxt )
 	sceneGroup:insert( titleLogo )
 	sceneGroup:insert( playBtn )
+
+
 end
 
 function scene:show( event )
@@ -99,6 +127,10 @@ function scene:show( event )
 	
 	if phase == "will" then
 		-- Called when the scene is still off screen and is about to move on screen
+
+		audio.setVolume( 0.1, { channel=2 } )
+		--audio.play(gameMusic,{channel = 2, loops = -1})
+
 	elseif phase == "did" then
 		-- Called when the scene is now on screen
 		-- 
