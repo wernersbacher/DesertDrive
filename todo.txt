@@ -13,9 +13,8 @@ NEU 2 01.02.19
 * coins spawn
 * bessere leveldesign
 * preloading verbessern
+* mehr töne
 * feuer geschwindigkeit sigmoid
-* beschleunigung firewall
-* feuerwall entfernung: achtung!!!
 
 particles
 * explosion kaputt

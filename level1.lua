@@ -24,6 +24,9 @@ local ppm = 30
 local preLoadNum = 15
 local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
 
+local _maxSpeed = 720
+local _maxAcc = 35
+
 -- textes
 
 
@@ -64,7 +67,8 @@ local menuSound
 local soundTable = {
  
     engine_zero = audio.loadSound( "sounds/engine.wav" ),
-    engine = audio.loadSound( "sounds/engine_loop.mp3" ),
+    engine = audio.loadSound( "sounds/engine_loop2.mp3" ),
+    jeep = audio.loadSound( "sounds/jeep.mp3" ),
 }
 
 -- forward declarations and other locals
@@ -91,6 +95,7 @@ function goToSc(name)
 	end
 
 	smokeVent._cbe_reserved.destroy()
+	audio.stop();
 
 	composer.gotoScene("tryagain", {
 		effect = "fade",
@@ -127,6 +132,22 @@ function goTuning()
 end
 
 --[[
+	SOUND FUNCTIONS
+]]
+
+function pitchEngine() 
+	
+	local max = getMaxes()
+	local max = max.maxForwardSpeed
+	--local acceleration = max.maxForwardAccel
+	local cur = math.min( math.abs(wheel[1].angularVelocity), max) -- entweder absolut wert von current, aber höchstens max
+	print(math.abs(wheel[1].angularVelocity))
+	local pitch = 0.9 + 0.8*(cur/max)
+
+	al.Source(enginePitch, al.PITCH, pitch)
+end
+
+--[[
 	DRIVING FUNCTIONS
 ]]
 
@@ -138,11 +159,22 @@ function rotateCar(rotateForward)
 	carShape.angularVelocity = carShape.angularVelocity+ f*rotateAcc
 end
 
-function accel(ac, max)
+function getMaxes() 
 	local f = 5 * ( 1 + stage/10 )
+	local M = {}
+	M["maxForwardSpeed"] = _maxSpeed * f
+	M["maxForwardAccel"] = _maxAcc * f
+	M["maxBackwardSpeed"] = -360 * 3
+	M["maxBackwardAcc"] = -20 * 3
+
+	return M
+end
+
+function accel()
 	--gas geben
-	local maxSpeed = max or 720 * f
-	local acceleration = val or 35 * f
+	local max = getMaxes()
+	local maxSpeed = max.maxForwardSpeed
+	local acceleration = max.maxForwardAccel
 	
 
 	for i = 1,2,1 do
@@ -157,9 +189,10 @@ function accel(ac, max)
 
 end
 
-function decel(ac, max) 
-	local maxSpeed = max or -360 * 3
-	local acceleration = val or -20 * 3
+function decel() 
+	local max = getMaxes()
+	local maxSpeed = max.maxBackwardSpeed
+	local acceleration = max.maxBackwardAcc
 
 	for i = 1,2,1 do
 		local speed = wheel[i].angularVelocity
@@ -198,6 +231,9 @@ function onFrame()
 		rotateCar(true)
 	end
 
+	
+	
+
 	-- moving the "camera"
 	local deltaX = carShape.x - oldx
 	oldx = carShape.x
@@ -235,6 +271,8 @@ function onFrame()
 	if(frames % 4 == 0) then
 		checkHills()
 
+		pitchEngine()
+
 		if fireBlock.x + 2000 > carShape.x then
 			fireWarning.isVisible = true
 		else
@@ -266,13 +304,10 @@ function go(event)
     if ( "began" == phase ) then
 		--timer.resume(touchLooper)
 		throttle = 1;		
-		
-		--print(al.Source(source, al.PITCH, 2.5))
 
     elseif ("ended" == phase or "cancelled" == phase ) then
 		--timer.pause(touchLooper)
 		throttle = 0
-		--al.Source(source, al.PITCH, 1)
     end
 
     return true; -- no touch propagation
@@ -513,6 +548,7 @@ local stillRunning = false
 function setGameOver() 
 	gameoverStatus = true
 	throttle = 0
+	audio.stop()
 	stillRunning = true
 	transition.fadeIn( gameover, { time=2000 } )
 	transition.fadeOut( gui, { time=500 } )
@@ -729,8 +765,8 @@ function scene:create( event )
 
 	-- SOUNDS
 
-	--_, source = audio.play(soundTable["engine"], {channel = 1, loops = -1})
-	audio.setVolume( 0.7, { channel=1 } )
+	_, enginePitch = audio.play(soundTable["jeep"], {channel = 1, loops = -1})
+	audio.setVolume( 0.4, { channel=1 } )
 
 
 	-- PARTICLES
