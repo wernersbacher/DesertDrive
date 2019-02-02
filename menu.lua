@@ -20,6 +20,7 @@ local gameMusic = audio.loadStream("sounds/dude.mp3")
 
 
 local stats = statMgr.load()
+local carChosen = "dodge"
 
 
 -- forward declarations and other locals
@@ -33,7 +34,7 @@ local function onPlayBtnRelease()
 	--composer.gotoScene( "level1", "fade", 500 )
 	
 	bg_aura._cbe_reserved.destroy()
-	funcs.goToSc("level1")
+	funcs.goToSc("level1", carChosen)
 	
 	return true	-- indicates successful touch
 end
@@ -80,10 +81,69 @@ function scene:create( event )
 	
 	-- auto anzeige
 	local f = 0.6
-	local car = display.newImageRect("img/car/car-full.png", 691*f, 275*f)
-	car.x = -100
-	car.y = display.contentCenterY
+	--local car = display.newImageRect("img/car/car-full.png", 691*f, 275*f)
+	--car.x = -100
+	--car.y = display.contentCenterY
 
+	-- Function to handle button events
+	local function handleButtonEvent( event )
+	
+		if ( "ended" == event.phase ) then
+			print(event.target.id)
+			carChosen = event.target.id
+			carText.text = carChosen
+		end
+	end
+	
+	local dodgeBtn = widget.newButton(
+		{
+			id = "dodge",
+			width = 691*f,
+			height = 275*f,
+			defaultFile = "img/car/dodge/car-full.png",
+			label = "button",
+			onEvent = handleButtonEvent
+		}
+	)
+	dodgeBtn.x = -100
+	dodgeBtn.y = display.contentCenterY
+	
+	dodgeBtn:setLabel( "" )
+
+	local mustangBtn = widget.newButton(
+		{
+			id = "mustang",
+			width = 691*f,
+			height = 213*f,
+			defaultFile = "img/car/mustang/car-full.png",
+			label = "button",
+			onEvent = handleButtonEvent
+		}
+	)
+	mustangBtn.x = dodgeBtn.x+dodgeBtn.width + 100
+	mustangBtn.y = display.contentCenterY
+	
+	mustangBtn:setLabel( "" )
+
+	local miniBtn = widget.newButton(
+		{
+			id = "mini",
+			width = 558*f,
+			height = 351*f,
+			defaultFile = "img/car/mini/car-full.png",
+			label = "button",
+			onEvent = handleButtonEvent
+		}
+	)
+	miniBtn.x = mustangBtn.x+mustangBtn.width + 100
+	miniBtn.y = display.contentCenterY
+	
+	miniBtn:setLabel( "" )
+
+	---
+
+	carText = display.newText("dodge", display.contentCenterX, display.contentHeight - 250, native.systemFont, 54 )
+	--
 	moneyTxt = display.newText("$".. stats.money, display.contentCenterX, 200, native.systemFont, 54 )
 
 	-- create a widget button (which will loads level1.lua on release)
@@ -113,7 +173,12 @@ function scene:create( event )
 	sceneGroup:insert( bg_aura )
 	
 	
-	sceneGroup:insert( car )
+	sceneGroup:insert( dodgeBtn )
+	sceneGroup:insert( mustangBtn )
+	sceneGroup:insert(miniBtn)
+
+	sceneGroup:insert(carText)
+
 	sceneGroup:insert( moneyTxt )
 	sceneGroup:insert( titleLogo )
 	sceneGroup:insert( playBtn )

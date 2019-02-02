@@ -74,12 +74,12 @@ local function printMemUsage()
     return true
 end
 
-function goToSc(name) 
+function goToSc(name, carChosen)
 
 	composer.gotoScene("tryagain", {
 		effect = "fade",
 		time = 100,
-		params = { actualGoTo = name }
+		params = { actualGoTo = name, carChosen = carChosen }
 	})
 end
 

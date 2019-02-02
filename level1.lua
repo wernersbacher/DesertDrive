@@ -9,6 +9,7 @@ local funcs = require "functions"
 --local storage = require "storage"
 local statMgr = require "stats"
 local tiles = require "tiles"
+local garage = require "cars"
 local scene = composer.newScene()
 local hills = require("levels.lvl1")
 local physics = require "physics"
@@ -52,6 +53,7 @@ local score = 0
 local score_text
 local highscore_text
 local car_hp, max_hp = 5000, 5000
+local carChosen = "dodge"
 
 local stats = statMgr.load()
 
@@ -104,7 +106,7 @@ function goToSc(name)
 	composer.gotoScene("tryagain", {
 		effect = "fade",
 		time = 100,
-		params = { actualGoTo = name }
+		params = { actualGoTo = name, carChosen = carChosen }
 	})
 
 end
@@ -166,8 +168,8 @@ end
 function getMaxes() 
 	local f = 5 * ( 1 + stage/10 )
 	local M = {}
-	M["maxForwardSpeed"] = _maxSpeed * f
-	M["maxForwardAccel"] = _maxAcc * f
+	M["maxForwardSpeed"] = carTable.maxForwardSpeed * f
+	M["maxForwardAccel"] = carTable.maxAcc * f
 	M["maxBackwardSpeed"] = -360 * 3
 	M["maxBackwardAcc"] = -20 * 3
 
@@ -622,7 +624,7 @@ function scene:create( event )
 	--[[
 		LOAD IMAGE SHEETS
 	]]
-	
+	carChosen = event.params.carChosen or "dodge"
 
 	-- IMAGE TILES
 	for i = 1, #tiles.stages, 1 do
@@ -667,7 +669,7 @@ function scene:create( event )
 	physics.start()
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
-	physics.setDrawMode("hybrid")
+	--physics.setDrawMode("hybrid")
 	physics.pause()
 
 	-- BACKGROUND
@@ -689,13 +691,14 @@ function scene:create( event )
 
 
 	-- CAR
-	local car_scale = 0.43
+	carTable = garage[carChosen]
+	local car_scale = carTable.scale --#
+	max_hp, car_hp = carTable.max_hp, carTable.max_hp
+	local dens = carTable.dens
 
-	local dens = 100
-
-	local car_image = "img/car/car-body.png"
+	local car_image = "img/car/".. carChosen .."/car-body.png" --#
 	local car_outline = graphics.newOutline( 5, car_image)
-	carShape = display.newImageRect(car, car_image, 691*car_scale, 194*car_scale)
+	carShape = display.newImageRect(car, car_image, carTable.width*car_scale, carTable.height*car_scale) --#
 	carShape.x = oldx
 	carShape.y = oldy
 	physics.addBody( carShape, "dynamic", { outline = car_outline, friction=0.3, density = 0.005*dens } )
@@ -703,22 +706,23 @@ function scene:create( event )
 
 	carShape.name = "carShape"
 
-
-
 	local carX = carShape.x
 	local carY = carShape.y
-	local wheelrad = 28 * car_scale*2 --13
-	local wheelXOff = 110*car_scale*2 -- 52
-	local wheelYOff = 55*car_scale*2  --27
+	local wheelrad = carTable.wheelrad * carTable.scale --13 --#
+	local wheelXOffRight = carTable.wheelXOffRight * carTable.scale -- 52 --#
+	local wheelYOffRight = carTable.wheelYOffRight * carTable.scale  --27 --#
+
+	local wheelXOffLeft = carTable.wheelXOffLeft * carTable.scale
+	local wheelYOffLeft = carTable.wheelYOffLeft * carTable.scale
 
 	-- Set the fill (paint) to use the bitmap image
 	local tyre = {
 		type = "image",
-		filename = "img/car/car-wheel.png"
+		filename = "img/car/".. carChosen .."/car-wheel.png" --#
 	}
 
 	 --wheel[1] = display.newCircle(car, carX+110, carY+55, 30)
-	 wheel[1] = display.newCircle(car, carX+wheelXOff, carY+wheelYOff, wheelrad)
+	 wheel[1] = display.newCircle(car, carX+wheelXOffRight, carY+wheelYOffRight, wheelrad)
 	physics.addBody( wheel[1], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=100, radius=wheelrad,  } )
 	wheel[1].angularDamping = 1
 	wheel[1].fill = tyre
@@ -726,7 +730,7 @@ function scene:create( event )
 	--wheel[1]:toBack()
 
 	 --wheel[2] = display.newCircle(car, carX-114, carY+60, 30)
-	 wheel[2] = display.newCircle(car, carX-wheelXOff*1.02, carY+wheelYOff*1.17, wheelrad)
+	 wheel[2] = display.newCircle(car, carX-wheelXOffLeft, carY+wheelYOffLeft, wheelrad)
 	physics.addBody( wheel[2], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=100, radius=wheelrad } )
 	wheel[2].angularDamping = 1
 	wheel[2].fill = tyre
@@ -737,9 +741,9 @@ function scene:create( event )
 
 	--local wheel1Joint = physics.newJoint( "pivot", carShape, wheel1, wheel1.x, wheel1.y, 0, 1 )
 	--local wheel2Joint = physics.newJoint("pivot", carShape, wheel[2], wheel[2].x, wheel[2].y, 0, 1 )
-	local wheelfreq = 3
-	local wheeldamp = 0.5
-	local wheelaxis = 40
+	local wheelfreq = carTable.wheelfreq
+	local wheeldamp = carTable.wheeldamp
+	local wheelaxis = carTable.wheelaxis
 
 	--front
 	local wheel1Joint = physics.newJoint("wheel", carShape, wheel[1], wheel[1].x, wheel[1].y, 1, wheelaxis);
@@ -839,7 +843,7 @@ function scene:create( event )
 	physics.addBody(fireBlock, "kinematic" )
 	fireBlock.name = "fire"
 	fireBlock.alpha = 0
-	fireBlock:setLinearVelocity(300, 0)
+	fireBlock:setLinearVelocity(0, 0)
 	
 	fireEmitter = display.newEmitter( _firewall )
 	fireEmitter.x = fireSpawn
@@ -974,7 +978,7 @@ function scene:show( event )
 		
 		Runtime:addEventListener( "enterFrame", onFrame )
 		
-		audio.play(soundTable["check_fire"], {loop=0, channel=30})
+		--audio.play(soundTable["check_fire"], {loop=0, channel=30})
 
 		
 	end

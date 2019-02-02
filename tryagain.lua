@@ -29,6 +29,8 @@ end
 function scene:show( event )
 
 	local actualGoTo = event.params.actualGoTo
+	print(event.params.carChosen)
+	local carChosen = event.params.carChosen or "dodge"
 
 	local sceneGroup = self.view
 	local phase = event.phase
@@ -38,7 +40,11 @@ function scene:show( event )
 
 	elseif ( phase == "did" ) then
         -- Code here runs when the scene is entirely on screen
-        composer.gotoScene(actualGoTo, "fade", 300 )
+        composer.gotoScene(actualGoTo, {
+			effect = "fade",
+			time = 250,
+			params = { carChosen = carChosen }
+		})
 
 	end
 end
