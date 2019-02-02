@@ -16,6 +16,7 @@ NEU 2 01.02.19
 --* kamera ändern
 * jump button
 * mute button
+* fraction
 
 particles
 * explosion kaputt

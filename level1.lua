@@ -27,8 +27,8 @@ local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", sys
 
 local _maxSpeed = 720
 local _maxAcc = 35
-local smokeAlpha = 0.07
-local maxFireSpeed = 600
+local smokeAlpha = 0.11
+local maxFireSpeed = 780
 
 -- textes
 
@@ -269,8 +269,6 @@ function onFrame()
 	-- upgrade
 	if stageTrigger[triggerCounter] ~= nil and stageTrigger[triggerCounter] > 0 and carShape.x > stageTrigger[triggerCounter] then
 		addMoney(100)
-		--local x, y = fireBlock:getLinearVelocity()
-		--fireBlock:setLinearVelocity(x*1.7, 0)
 		triggerCounter = triggerCounter +1
 	end
 
@@ -293,12 +291,12 @@ function onFrame()
 	
 	if frames % 60 == 0 then
 		seconds = seconds +1
-		local x = seconds/10
+		local x = seconds*1
 		local newSpeed = maxFireSpeed * funcs.sigmoid(x)
 
 
 		local x, y = fireBlock:getLinearVelocity()
-		fireBlock:setLinearVelocity(x*1.03, 0)
+		fireBlock:setLinearVelocity(newSpeed, 0)
 	end
 	
 	-- score updating
@@ -528,7 +526,6 @@ function onCarCollision(self, event)
 	end
 end
 
-
 local function onPostCollision( self, event )
 	if gameoverStatus then
 		return 
@@ -539,15 +536,11 @@ local function onPostCollision( self, event )
 		--print( "friction: " .. event.friction )
 
 		car_hp = car_hp - event.force
-
-		--smokeVent.alpha = (max_hp-car_hp)/max_hp
-		
 		local f = 10000/max_hp -- wenn weniger hp da sind, muss der wert skaliert werden
 		local alphaFactor = 0.0014* 1.0007^((max_hp-car_hp)*f)
 		print(alphaFactor)
 		local alpha = smokeAlpha * alphaFactor --(max_hp-car_hp)/max_hp 
 		
-
 		smokeVent.startAlpha = alpha
 		smokeVent.endAlpha = alpha
 		smokeVent.lifeAlpha = alpha
@@ -556,6 +549,13 @@ local function onPostCollision( self, event )
 			setGameOver()
 			car_hp = 0
 		end
+
+	-- sparks
+	print( "position: " .. event.x .. "," .. event.y )
+	
+	--sparksVent.emitX = event.x 
+	--sparksVent.emitY = event.y
+
 		hptxt.text = funcs.round(car_hp) .. " Struktur"
 	end
 end
@@ -817,6 +817,28 @@ function scene:create( event )
 	smokeVent.emitX = carShape.x
 	smokeVent.emitY = carShape.y
 	--smokeVent.alpha = 0
+--[[
+	sparksVent = CBE.newVent({
+		preset = "burn",
+
+		positionType = "inRadius", -- Add a bit of randomness to the position
+		build = function() local size = math.random(5, 15) return display.newImageRect("img/particle.png", size, size) end,
+		physics = {
+			velocity = 0,
+			gravityY = -0.035,
+			angles = {0, 360},
+			scaleRateX = 1.05,
+			scaleRateY = 1.05
+		}
+	})
+	car:insert(sparksVent)
+	sparksVent:start()
+	local sTimer = timer.performWithDelay( 100, function() 
+		funcs.printt(sparkGroup)
+		sparkVent._cbe_reserved.destroy()
+	end )]]
+	table.insert(timerTable, sTimer)
+
 
 
 	-- FIRE 
@@ -837,7 +859,7 @@ function scene:create( event )
 		loopDirection = "bounce"    -- Optional ; values include "forward" or "bounce"
 	}
 
-	local fireSpawn = -1000
+	local fireSpawn = -1500
 
 	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
 	physics.addBody(fireBlock, "kinematic" )
@@ -891,7 +913,7 @@ function scene:create( event )
 	fireWarning = display.newImageRect(gui, "img/fire_behind.png", 545*2, 50*2)
 	fireWarning.x = display.contentCenterX
 	fireWarning.y = 300
-	transition.blink( fireWarning, { time=1200 } )
+	transition.blink( fireWarning, { time=2200 } )
 
 
 	-- GAMEOVER ZEUG
@@ -978,7 +1000,7 @@ function scene:show( event )
 		
 		Runtime:addEventListener( "enterFrame", onFrame )
 		
-		--audio.play(soundTable["check_fire"], {loop=0, channel=30})
+		audio.play(soundTable["check_fire"], {loop=0, channel=30})
 
 		
 	end

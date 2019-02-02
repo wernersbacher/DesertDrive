@@ -60,7 +60,7 @@ M["mustang"] = {
     wheelXOffLeft = 97 * 2 ,
 	wheelYOffLeft = 75 * 2 ,
     wheeldamp = 0.5,
-    wheelaxis = 50,
+    wheelaxis = 40,
     wheelfreq = 3,
 
     maxForwardSpeed = 280,
