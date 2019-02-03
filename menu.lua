@@ -10,11 +10,35 @@ local scene = composer.newScene()
 local funcs = require "functions"
 local statMgr = require "stats"
 local CBE = require("CBE.CBE")
+local json = require( "json" )
 
 -- include Corona's "widget" library
 local widget = require "widget"
 
 local gameMusic = audio.loadStream("sounds/dude.mp3")
+local globals = require("globals")
+
+print(globals["init"])
+--------------------------------------------
+-- FIRST LOADING
+if globals["init"] == nil then
+	globals["init"] = true
+
+
+	globals["soundTable"] = {
+ 
+		engine_zero = audio.loadSound( "sounds/engine.wav" ),
+		engine = audio.loadSound( "sounds/engine_loop2.mp3" ),
+		jeep = audio.loadSound( "sounds/jeep2.mp3" ),
+		check_fire = audio.loadStream("sounds/check_fire.mp3"),
+		gameMusic = audio.loadStream("sounds/dude.mp3"),
+		crash = audio.loadSound("sounds/crash.mp3")
+	}
+
+	globals["_firewall"] = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
+
+
+end
 
 --------------------------------------------
 
@@ -33,7 +57,7 @@ local function onPlayBtnRelease()
 	-- go to level1.lua scene
 	--composer.gotoScene( "level1", "fade", 500 )
 	
-	bg_aura._cbe_reserved.destroy()
+	
 	funcs.goToSc("level1", carChosen)
 	
 	return true	-- indicates successful touch
@@ -94,6 +118,8 @@ function scene:create( event )
 			carText.text = carChosen
 		end
 	end
+
+	-- BUTTONS
 	
 	local dodgeBtn = widget.newButton(
 		{
@@ -140,6 +166,7 @@ function scene:create( event )
 	
 	miniBtn:setLabel( "" )
 
+	-- BUTTONS ENDE
 	---
 
 	carText = display.newText("dodge", display.contentCenterX, display.contentHeight - 250, native.systemFont, 54 )
@@ -194,7 +221,7 @@ function scene:show( event )
 		-- Called when the scene is still off screen and is about to move on screen
 
 		audio.setVolume( 0.4, { channel=2 } )
-		--audio.play(gameMusic,{channel = 2, loops = -1})
+		audio.play(globals.soundTable.gameMusic,{channel = 2, loops = -1})
 
 	elseif phase == "did" then
 		-- Called when the scene is now on screen
@@ -226,6 +253,8 @@ function scene:destroy( event )
 	-- INSERT code here to cleanup the scene
 	-- e.g. remove display objects, remove touch listeners, save state, etc.
 	
+	bg_aura._cbe_reserved.destroy()
+
 	if playBtn then
 		playBtn:removeSelf()	-- widgets must be manually removed
 		playBtn = nil

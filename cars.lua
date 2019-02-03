@@ -19,7 +19,9 @@ M["dodge"] = {
 
     maxForwardSpeed = 720,
     maxAcc = 35,
-    max_hp = 5000
+    max_hp = 5000,
+
+    pitch = 1
 
 
 }
@@ -42,8 +44,9 @@ M["mini"] = {
 
     maxForwardSpeed = 760,
     maxAcc = 40,
-    max_hp = 6000
+    max_hp = 6000,
 
+    pitch = 1
 
 }
 
@@ -53,7 +56,7 @@ M["mustang"] = {
     width = 691,
     height = 183,
     scale = 0.43,
-    dens = 100,
+    dens = 150,
     wheelrad = 45 * 2,
     wheelXOffRight = 110 * 2,
 	wheelYOffRight = 75 * 2,
@@ -65,8 +68,9 @@ M["mustang"] = {
 
     maxForwardSpeed = 280,
     maxAcc = 12,
-    max_hp = 2000
+    max_hp = 2500,
 
+    pitch = 1.4
 
 }
 

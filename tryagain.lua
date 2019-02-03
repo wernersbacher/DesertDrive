@@ -20,7 +20,10 @@ function scene:create( event )
 	local sceneGroup = self.view
 
     -- Code here runs when the scene is first created but has not yet appeared on screen
-    composer.removeScene(composer.getSceneName( "previous" )); 
+	composer.removeScene(composer.getSceneName( "previous" )); 
+	
+	local loadingText = display.newText(sceneGroup, "LOADING ...", display.contentCenterX, display.contentCenterY, native.systemFont, 54)
+	loadingText:setTextColor(255, 255, 255)
 
 end
 

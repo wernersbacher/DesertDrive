@@ -14,6 +14,8 @@ local scene = composer.newScene()
 local hills = require("levels.lvl1")
 local physics = require "physics"
 local json = require( "json" )
+local globals = require("globals")
+print(globals["test"])
 
 local CBE = require("CBE.CBE")
 
@@ -23,7 +25,7 @@ composer.removeScene("tryagain");
 
 local ppm = 30
 local preLoadNum = 6
-local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
+
 
 local _maxSpeed = 720
 local _maxAcc = 35
@@ -69,13 +71,7 @@ local timerTable = {}
 
 -- sound
 local menuSound
-local soundTable = {
- 
-    engine_zero = audio.loadSound( "sounds/engine.wav" ),
-    engine = audio.loadSound( "sounds/engine_loop2.mp3" ),
-	jeep = audio.loadSound( "sounds/jeep2.mp3" ),
-	check_fire = audio.loadStream("sounds/check_fire.mp3")
-}
+
 
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
@@ -292,7 +288,7 @@ function onFrame()
 	
 	if frames % 60 == 0 then
 		seconds = seconds +1
-		local x = seconds*2
+		local x = seconds*1
 		local newSpeed = maxFireSpeed * funcs.sigmoid(x)
 
 
@@ -316,27 +312,30 @@ function go(event)
 		display.getCurrentStage():setFocus(target)
 		target.isFocus = true
 		throttle = 1;
-
-	elseif ( target.isFocus ) then
-		if ( (event.x < bounds.xMin) or (event.x > bounds.xMax) or (event.y < bounds.yMin) or (event.y > bounds.yMax) ) then
-			display.getCurrentStage():setFocus(nil)        
-			target.isFocus = false 
-			throttle = 0
-		end
-
-    elseif ("ended" == phase or "cancelled" == phase) then
+		
+	elseif ("ended" == phase or "cancelled" == phase) then
 		--timer.pause(touchLooper)
 		display.getCurrentStage():setFocus(nil)
       	target.isFocus = false
 		  throttle = 0
+		  
+	elseif ( target.isFocus ) then
+		if ( (event.x < bounds.xMin) or (event.x > bounds.xMax) or (event.y < bounds.yMin) or (event.y > bounds.yMax) ) then
+			display.getCurrentStage():setFocus(nil)        
+			target.isFocus = false 
+
+			throttle = 0
+		else
+			throttle = 1
+		end
+
+    
     end
 
     return true; -- no touch propagation
 end
 
 function brake(event)
-	--debug.text = "DEBUG"
-
 	local phase = event.phase
 	local target = event.target
 	local bounds = target.contentBounds
@@ -346,19 +345,24 @@ function brake(event)
 		display.getCurrentStage():setFocus(target)
 		target.isFocus = true
 		braking = -1;
-
+		
+	elseif ("ended" == phase or "cancelled" == phase) then
+		--timer.pause(touchLooper)
+		display.getCurrentStage():setFocus(nil)
+      	target.isFocus = false
+		  braking = 0
+		  
 	elseif ( target.isFocus ) then
 		if ( (event.x < bounds.xMin) or (event.x > bounds.xMax) or (event.y < bounds.yMin) or (event.y > bounds.yMax) ) then
 			display.getCurrentStage():setFocus(nil)        
 			target.isFocus = false 
+
 			braking = 0
+		else
+			braking = -1
 		end
 
-    elseif ("ended" == phase or "cancelled" == phase) then
-		--timer.pause(touchLooper)
-		display.getCurrentStage():setFocus(nil)
-      	target.isFocus = false
-		braking = 0
+    
     end
 
     return true; -- no touch propagation
@@ -456,10 +460,7 @@ function createHill()
 		
 	-- upgrade stage?
 	--print("stage: " .. stage .. " driven: ".. already_driven .. ", carshape.x: ".. carShape.x .. ", stg ende:"..stg.ende)
-	if(stageCount >= stg.count
-		--and carShape.x > already_driven + stg.width*stg.count - (display.actualContentWidth - 0)
-		and #tiles.stages > stage
-	) 
+	if(stageCount >= stg.count) 
 		
 		then
 		--print ("upgrade stage! "..carShape.x.. " > "..already_driven.. " + " .. stg.width*stg.count .. " - ".. display.actualContentWidth .. " count: ".. stg.count)
@@ -467,7 +468,10 @@ function createHill()
 
 		already_driven = already_driven + stg.width*stg.count
 		stageCount = 0 
-		stage = (stage + 1) --% #tiles.stages 
+		stage = stage + 1 --% #tiles.stages 
+		if #tiles.stages < stage then
+			stage = 1
+		end
 		hillw = tiles.stages[stage].width
 		hillh = tiles.stages[stage].height 
 		--hillscaler = tiles.stages[stage].scaler
@@ -475,9 +479,6 @@ function createHill()
 
 		nextStageTrigger = nextStageTrigger + stg.width*stg.count
 		table.insert(stageTrigger, nextStageTrigger)
-		--print (carShape.x .. " < " .. nextStageTrigger)
-
-		--funcs.printt(stageTrigger)
 
 	--elseif #tiles.stages <= stage then
 
@@ -504,12 +505,13 @@ end
 function checkHills() 
 
 	while(#loaded_elements - preLoadNum < 1 
-		or carShape.x > loaded_elements[#loaded_elements-preLoadNum].x) do
+		or ( loaded_elements[#loaded_elements-preLoadNum] ~= nil and carShape.x > loaded_elements[#loaded_elements-preLoadNum].x)) do
+			--print("Create hill ".. #loaded_elements-preLoadNum)
 		createHill()
 	end
 
 	for i=#loaded_elements, 1, -1 do
-		if (loaded_elements[i] ~= nil and carShape.x - loaded_elements[i].x > 4000) then
+		if (loaded_elements[i] ~= nil and carShape.x - loaded_elements[i].x > 3000) then
 			removeHill(i)
         end
 	end
@@ -544,15 +546,22 @@ function onCarCollision(self, event)
         print( "Touchiiing" )
 	end
 end
-
+local crashFrameNum = 0
 local function onPostCollision( self, event )
 	if gameoverStatus then
 		return 
 	end
 	--car_hp
-	if ( event.force > 25.0 and event.other.name ~= nil and event.other.name == "hill") then
+	if ( event.force > 35.0 and event.other.name ~= nil and event.other.name == "hill") then
 		--print( "force: " .. event.force )
 		--print( "friction: " .. event.friction )
+
+		-- generate sound
+		if(crashFrameNum + 30 < frames) then
+			audio.play(globals.soundTable["crash"], {channel = 3, loops = 0})
+			crashFrameNum = frames
+		end
+		-- lower hp
 
 		car_hp = car_hp - event.force
 		local f = 10000/max_hp -- wenn weniger hp da sind, muss der wert skaliert werden
@@ -619,22 +628,7 @@ function scene:create( event )
 	-- e.g. add display objects to 'sceneGroup', add touch listeners, etc.
 
 	local sceneGroup = self.view
-	 
-	--menuSound = audio.loadSound( "audio/game-music-loop.ogg" ) 
 
-	--[[
-		LOAD SCORES
-	
-
-	local stat_load = storage.loadScores("stats")
-	if(stat_load) then
-		for key,value in pairs(stats) do --actualcode
-			if stat_load[key] ~= nil then
-				stats[key] = stat_load[key]
-			end
-			print(key ..  " - " .. stats[key])
-		end
-	end]]
 
 	--[[
 		PARTICLE SYSTEM
@@ -689,7 +683,7 @@ function scene:create( event )
 	physics.start()
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
-	physics.setDrawMode("hybrid")
+	--physics.setDrawMode("hybrid")
 	physics.pause()
 
 	-- BACKGROUND
@@ -715,7 +709,7 @@ function scene:create( event )
 	local car_scale = carTable.scale --#
 	max_hp, car_hp = carTable.max_hp, carTable.max_hp
 	local dens = carTable.dens
-
+	
 	local car_image = "img/car/".. carChosen .."/car-body.png" --#
 	local car_outline = graphics.newOutline( 5, car_image)
 	carShape = display.newImageRect(car, car_image, carTable.width*car_scale, carTable.height*car_scale) --#
@@ -804,7 +798,7 @@ function scene:create( event )
 
 	-- SOUNDS
 
-	_, enginePitch = audio.play(soundTable["jeep"], {channel = 1, loops = -1})
+	_, enginePitch = audio.play(globals.soundTable["jeep"], {channel = 1, loops = -1})
 	--audio.setVolume( 0.7, { channel=1 } )
 
 
@@ -887,7 +881,7 @@ function scene:create( event )
 	fireBlock.alpha = 0
 	fireBlock:setLinearVelocity(0, 0)
 	
-	fireEmitter = display.newEmitter( _firewall )
+	fireEmitter = display.newEmitter( globals._firewall )
 	fireEmitter.x = fireSpawn
 	fireEmitter.y = carShape.y -30
 	world:insert(fireEmitter)
@@ -992,6 +986,8 @@ function scene:show( event )
 	
 	if phase == "will" then
 		-- Called when the scene is still off screen and is about to move on screen
+
+
 	elseif phase == "did" then
 		-- Called when the scene is now on screen
 		-- 
@@ -1021,7 +1017,7 @@ function scene:show( event )
 		
 		Runtime:addEventListener( "enterFrame", onFrame )
 		
-		audio.play(soundTable["check_fire"], {loop=0, channel=30})
+		audio.play(globals.soundTable["check_fire"], {loop=0, channel=30})
 
 		
 	end
