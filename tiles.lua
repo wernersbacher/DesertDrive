@@ -7,11 +7,11 @@ table.insert(stages, {
     width = 200,
     height = 200,
     scaler = 1,
-    count = 30,
+    count = 20,
     ende = 30 * 100,
     color = {80/255, 80/255, 80/255},
     num = 5,
-    special = 2
+    special = 0
 })
 
 table.insert(stages, {
@@ -19,7 +19,7 @@ table.insert(stages, {
     width = 1000,
     height = 600,
     scaler = 1,
-    count = 25,
+    count = 5,
     ende = 30 * 5000,
     color = {32/255, 83/255, 201/255},
     num = 6,
@@ -38,7 +38,7 @@ table.insert(stages, {
     special = 3
 })
 
-
+--[[
 table.insert(stages, {
     name = "desert1",
     width = 100,
@@ -50,16 +50,16 @@ table.insert(stages, {
     color = {234/255, 156/255, 32/255},
     special = 0
 })
-
+]]
 table.insert(stages, {
     name = "fast",
-    width = 200,
-    height = 200,
+    width = 1000,
+    height = 300,
     scaler = 1,
-    count = 25,
+    count = 15,
     ende = 30 * 30000,
     scaler = 1,
-    num = 4,
+    num = 5,
     color = {10/255, 2/255, 2/255},
     special = 2
 })

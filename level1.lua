@@ -22,7 +22,7 @@ composer.removeScene("tryagain");
 -- const
 
 local ppm = 30
-local preLoadNum = 15
+local preLoadNum = 6
 local _firewall = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
 
 local _maxSpeed = 720
@@ -45,6 +45,7 @@ local firewall = display.newGroup()
 local wheel = {}
 local background, carShape, forward, back, tryagain;
 local throttle = 0
+local braking = 0
 
 --game vars
 local gameoverStatus = false
@@ -230,10 +231,10 @@ function onFrame()
 		return
 	end
 
-	if(throttle == 1) then
+	if(throttle+braking == 1) then
 		accel()
 		rotateCar()
-	elseif(throttle == -1) then
+	elseif(throttle+braking == -1) then
 		decel()
 		rotateCar(true)
 	end
@@ -291,7 +292,7 @@ function onFrame()
 	
 	if frames % 60 == 0 then
 		seconds = seconds +1
-		local x = seconds*1
+		local x = seconds*2
 		local newSpeed = maxFireSpeed * funcs.sigmoid(x)
 
 
@@ -335,10 +336,10 @@ function brake(event)
 
     if ( "began" == phase ) then
 		--timer.resume(touchLooper)
-		throttle = -1;
+		braking = -1;
     elseif ("ended" == phase or "cancelled" == phase) then
 		--timer.pause(touchLooper)
-		throttle = 0
+		braking = 0
     end
 
     return true; -- no touch propagation
@@ -446,10 +447,11 @@ function createHill()
 		
 		then
 		--print ("upgrade stage! "..carShape.x.. " > "..already_driven.. " + " .. stg.width*stg.count .. " - ".. display.actualContentWidth .. " count: ".. stg.count)
+			print("stages insg: ".. #tiles.stages .. ", stage jetzt:" .. stage)
 
 		already_driven = already_driven + stg.width*stg.count
 		stageCount = 0 
-		stage = stage + 1
+		stage = (stage + 1) --% #tiles.stages 
 		hillw = tiles.stages[stage].width
 		hillh = tiles.stages[stage].height 
 		--hillscaler = tiles.stages[stage].scaler
@@ -485,7 +487,8 @@ end
 
 function checkHills() 
 
-	while(#loaded_elements-preLoadNum < 1 or carShape.x > loaded_elements[#loaded_elements-preLoadNum].x) do
+	while(#loaded_elements - preLoadNum < 1 
+		or carShape.x > loaded_elements[#loaded_elements-preLoadNum].x) do
 		createHill()
 	end
 
@@ -565,6 +568,7 @@ local stillRunning = false
 function setGameOver() 
 	gameoverStatus = true
 	throttle = 0
+	braking = 0
 	audio.stop({ channel=1 })
 	stillRunning = true
 	transition.fadeIn( gameover, { time=2000 } )
@@ -669,7 +673,7 @@ function scene:create( event )
 	physics.start()
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
-	--physics.setDrawMode("hybrid")
+	physics.setDrawMode("hybrid")
 	physics.pause()
 
 	-- BACKGROUND
@@ -873,14 +877,15 @@ function scene:create( event )
 	world:insert(fireEmitter)
 
 	-- BUTTONS
-	back = display.newImageRect(gui, "img/gui/brake.png", 256, 256 )
+	local butScale = 1.2
+	back = display.newImageRect(gui, "img/gui/brake.png", 256*butScale, 256 *butScale)
 	back.x = display.screenOriginX
 	back.y = display.actualContentHeight
 	back.anchorX = 0
 	back.anchorY = 1
 	
 
-	forward = display.newImageRect(gui, "img/gui/go.png", 256, 256 )
+	forward = display.newImageRect(gui, "img/gui/go.png", 256*butScale, 256 *butScale)
 	forward.x = display.screenOriginX+display.actualContentWidth
 	forward.y = display.screenOriginY+display.actualContentHeight
 	forward.anchorX = 1
@@ -910,7 +915,7 @@ function scene:create( event )
 
 	-- WARNING FIRE
 
-	fireWarning = display.newImageRect(gui, "img/fire_behind.png", 545*2, 50*2)
+	fireWarning = display.newImageRect(gui, "img/fire_behind2.png", 853*0.5, 184*0.5)
 	fireWarning.x = display.contentCenterX
 	fireWarning.y = 300
 	transition.blink( fireWarning, { time=2200 } )

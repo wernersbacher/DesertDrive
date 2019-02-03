@@ -16,7 +16,13 @@ NEU 2 01.02.19
 --* kamera ändern
 * jump button
 * mute button
+
 * fraction
+* pitch von auto in config
+* stages wiederholen
+
+* explosion
+* preload weniger, bzw nach größe gucken -> alle tiles größer machen
 
 particles
 * explosion kaputt

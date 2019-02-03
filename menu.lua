@@ -194,7 +194,7 @@ function scene:show( event )
 		-- Called when the scene is still off screen and is about to move on screen
 
 		audio.setVolume( 0.4, { channel=2 } )
-		audio.play(gameMusic,{channel = 2, loops = -1})
+		--audio.play(gameMusic,{channel = 2, loops = -1})
 
 	elseif phase == "did" then
 		-- Called when the scene is now on screen
