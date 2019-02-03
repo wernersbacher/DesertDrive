@@ -92,6 +92,19 @@ function round(number)
    return number
   end
 
+  function eventWithinBounds(obj, event)
+    
+    local bounds = obj.contentBounds
+    local x, y = event.x, event.y
+         
+    if ((x >= bounds.xMin) and (x <= bounds.xMax) and (y >= bounds.yMin) and (y <= bounds.yMax)) then
+        print("got called true")
+       return true
+    end
+    print("got called false")
+    return false   
+ end
+
 
 function sigmoid(x)
     return 1/(1 + math.exp(-x))
@@ -105,5 +118,6 @@ M.scaleOutline = scaleOutline
 M.goToSc = goToSc
 M.round = round
 M.sigmoid = sigmoid
+M.eventWithinBounds = eventWithinBounds
  
 return M

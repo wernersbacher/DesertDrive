@@ -307,46 +307,62 @@ function onFrame()
 end
 
 function go(event)
-	--debug.text = "DEBUG"
-
-	--local wheel = event.target
+	local phase = event.phase
+	local target = event.target
+	local bounds = target.contentBounds
     local phase = event.phase
 
     if ( "began" == phase ) then
-		--timer.resume(touchLooper)
-		throttle = 1;		
+		display.getCurrentStage():setFocus(target)
+		target.isFocus = true
+		throttle = 1;
 
-    elseif ("ended" == phase or "cancelled" == phase ) then
+	elseif ( target.isFocus ) then
+		if ( (event.x < bounds.xMin) or (event.x > bounds.xMax) or (event.y < bounds.yMin) or (event.y > bounds.yMax) ) then
+			display.getCurrentStage():setFocus(nil)        
+			target.isFocus = false 
+			throttle = 0
+		end
+
+    elseif ("ended" == phase or "cancelled" == phase) then
 		--timer.pause(touchLooper)
-		throttle = 0
+		display.getCurrentStage():setFocus(nil)
+      	target.isFocus = false
+		  throttle = 0
     end
 
     return true; -- no touch propagation
-
-	--wheel1.angularVelocity
-	 
-	--wheel1:applyTorque( 50 )
 end
 
 function brake(event)
 	--debug.text = "DEBUG"
 
-	--local wheel = event.target
+	local phase = event.phase
+	local target = event.target
+	local bounds = target.contentBounds
     local phase = event.phase
 
     if ( "began" == phase ) then
-		--timer.resume(touchLooper)
+		display.getCurrentStage():setFocus(target)
+		target.isFocus = true
 		braking = -1;
+
+	elseif ( target.isFocus ) then
+		if ( (event.x < bounds.xMin) or (event.x > bounds.xMax) or (event.y < bounds.yMin) or (event.y > bounds.yMax) ) then
+			display.getCurrentStage():setFocus(nil)        
+			target.isFocus = false 
+			braking = 0
+		end
+
     elseif ("ended" == phase or "cancelled" == phase) then
 		--timer.pause(touchLooper)
+		display.getCurrentStage():setFocus(nil)
+      	target.isFocus = false
 		braking = 0
     end
 
     return true; -- no touch propagation
 
-	--wheel1.angularVelocity
-	 
-	--wheel1:applyTorque( 50 )
 end
 
 --[[
@@ -877,17 +893,17 @@ function scene:create( event )
 	world:insert(fireEmitter)
 
 	-- BUTTONS
-	local butScale = 1.2
+	local butScale = 0.9
 	back = display.newImageRect(gui, "img/gui/brake.png", 256*butScale, 256 *butScale)
-	back.x = display.screenOriginX
-	back.y = display.actualContentHeight
+	back.x = display.screenOriginX+20
+	back.y = display.actualContentHeight-50
 	back.anchorX = 0
 	back.anchorY = 1
 	
 
 	forward = display.newImageRect(gui, "img/gui/go.png", 256*butScale, 256 *butScale)
-	forward.x = display.screenOriginX+display.actualContentWidth
-	forward.y = display.screenOriginY+display.actualContentHeight
+	forward.x = display.screenOriginX+display.actualContentWidth-20
+	forward.y = display.screenOriginY+display.actualContentHeight-50
 	forward.anchorX = 1
 	forward.anchorY = 1
 
