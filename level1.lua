@@ -4,12 +4,14 @@
 --
 -----------------------------------------------------------------------------------------
 
+
+local funcs = require "math"
+
 local composer = require( "composer" )
 local funcs = require "functions"
 --local storage = require "storage"
 local statMgr = require "stats"
 local tiles = require "tiles"
-local garage = require "cars"
 local scene = composer.newScene()
 local hills = require("levels.lvl1")
 local physics = require "physics"
@@ -173,19 +175,38 @@ function getMaxes()
 	return M
 end
 
+function getCurrentAccel(maxSpeed, currentSpeed)
+
+	-- static
+
+	-- Skala von 1 bis auf x achse, 10 entspricht 100 des topspeeds
+	-- Die ausgabe ist der prozentuale wert in dezimal der maximalen accel, die genutzt werden darf
+
+	local x = 10 * currentSpeed/maxSpeed
+
+	-- Formel für Plotter:	1/(e^(0.3*(x-1)))*0.5*(abs(sin(0.8*pi*x))+0.5)
+	
+	local e_func = 1 / math.exp(0.3*(x-1))
+	local sinus_func = 0.5*(math.abs(math.sin(0.8*math.pi*x))+0.5)
+
+	return e_func*sinus_func
+
+end
+
 function accel()
 	--gas geben
 	local max = getMaxes()
 	local maxSpeed = max.maxForwardSpeed
-	local acceleration = max.maxForwardAccel
+	local maxAcceleration = max.maxForwardAccel
 	
 
 	for i = 1,2,1 do
 		local speed = wheel[i].angularVelocity
-		if(speed+acceleration > maxSpeed) then
+		local accel = getCurrentAccel(maxSpeed, speed) * maxAcceleration
+		if(speed+accel > maxSpeed) then
 			wheel[i].angularVelocity = maxSpeed
 		else
-			wheel[i].angularVelocity = speed+acceleration
+			wheel[i].angularVelocity = speed+accel
 		end
 	
 	end
@@ -245,9 +266,9 @@ function onFrame()
 	local deltaY = carShape.y - oldy
 	oldy = carShape.y
 	 -- move fire wall with car height
-	fireBlock.y = carShape.y
+--[[ 	fireBlock.y = carShape.y
 	fireEmitter.x = fireBlock.x
-	fireEmitter.y = carShape.y -30
+	fireEmitter.y = carShape.y -30 ]]
 
 	
 
@@ -275,11 +296,11 @@ function onFrame()
 
 		pitchEngine()
 
-		if fireBlock.x + 2000 > carShape.x then
+--[[ 		if fireBlock.x + 2000 > carShape.x then
 			fireWarning.isVisible = true
 		else
 			fireWarning.isVisible = false
-		end
+		end ]]
 
 	-- score updating
 		score = math.round(carShape.x/ppm)
@@ -292,8 +313,8 @@ function onFrame()
 		local newSpeed = maxFireSpeed * funcs.sigmoid(x)
 
 
-		local x, y = fireBlock:getLinearVelocity()
-		fireBlock:setLinearVelocity(newSpeed, 0)
+		--local x, y = fireBlock:getLinearVelocity()
+		--fireBlock:setLinearVelocity(newSpeed, 0)
 	end
 	
 	-- score updating
@@ -513,12 +534,12 @@ function checkHills()
 	for i=#loaded_elements, 1, -1 do
 		if (loaded_elements[i] ~= nil and carShape.x - loaded_elements[i].x > 3000) then
 			removeHill(i)
-        end
+    end
 	end
 end
 
 
-function onFireCollision( self, event )
+--[[ function onFireCollision( self, event )
 	if gameoverStatus then
 		return 
 	end
@@ -534,7 +555,7 @@ function onFireCollision( self, event )
 		end
         
     end
-end
+end ]]
 
 
 function onCarCollision(self, event) 
@@ -606,7 +627,7 @@ function setGameOver()
 		if stillRunning then
 			physics.pause()
 			stopped = true
-			fireEmitter:pause()
+			--fireEmitter:pause()
 		end  
 	end )
 	table.insert(timerTable, gTimer)
@@ -705,7 +726,7 @@ function scene:create( event )
 
 
 	-- CAR
-	carTable = garage[carChosen]
+	carTable = globals.garage[carChosen]
 	local car_scale = carTable.scale --#
 	max_hp, car_hp = carTable.max_hp, carTable.max_hp
 	local dens = carTable.dens
@@ -737,7 +758,7 @@ function scene:create( event )
 
 	 --wheel[1] = display.newCircle(car, carX+110, carY+55, 30)
 	 wheel[1] = display.newCircle(car, carX+wheelXOffRight, carY+wheelYOffRight, wheelrad)
-	physics.addBody( wheel[1], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=100, radius=wheelrad,  } )
+	physics.addBody( wheel[1], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad,  } )
 	wheel[1].angularDamping = 1
 	wheel[1].fill = tyre
 	wheel[1].name = "tyre"
@@ -745,7 +766,7 @@ function scene:create( event )
 
 	 --wheel[2] = display.newCircle(car, carX-114, carY+60, 30)
 	 wheel[2] = display.newCircle(car, carX-wheelXOffLeft, carY+wheelYOffLeft, wheelrad)
-	physics.addBody( wheel[2], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=100, radius=wheelrad } )
+	physics.addBody( wheel[2], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad } )
 	wheel[2].angularDamping = 1
 	wheel[2].fill = tyre
 	wheel[1].name = "tyre"
@@ -875,7 +896,7 @@ function scene:create( event )
 
 	local fireSpawn = -1500
 
-	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
+--[[ 	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
 	physics.addBody(fireBlock, "kinematic" )
 	fireBlock.name = "fire"
 	fireBlock.alpha = 0
@@ -884,7 +905,7 @@ function scene:create( event )
 	fireEmitter = display.newEmitter( globals._firewall )
 	fireEmitter.x = fireSpawn
 	fireEmitter.y = carShape.y -30
-	world:insert(fireEmitter)
+	world:insert(fireEmitter) ]]
 
 	-- BUTTONS
 	local butScale = 0.9
@@ -902,10 +923,10 @@ function scene:create( event )
 	forward.anchorY = 1
 
 	tryagain = display.newImageRect(gui, "img/gui/repeat.png", 128, 128 )
-		tryagain.x = display.screenOriginX +50
-		tryagain.y = 0 +50
-		tryagain.anchorX = 0
-		tryagain.anchorY = 0
+	tryagain.x = display.screenOriginX +50
+	tryagain.y = 0 +50
+	tryagain.anchorX = 0
+	tryagain.anchorY = 0
 
 		
 	tuningBtn = display.newImageRect(gui, "img/gui/tuning.png", 128, 128 )
@@ -925,10 +946,10 @@ function scene:create( event )
 
 	-- WARNING FIRE
 
-	fireWarning = display.newImageRect(gui, "img/fire_behind2.png", 853*0.5, 184*0.5)
+--[[ 	fireWarning = display.newImageRect(gui, "img/fire_behind2.png", 853*0.5, 184*0.5)
 	fireWarning.x = display.contentCenterX
 	fireWarning.y = 300
-	transition.blink( fireWarning, { time=2200 } )
+	transition.blink( fireWarning, { time=2200 } ) ]]
 
 
 	-- GAMEOVER ZEUG
@@ -964,7 +985,7 @@ function scene:create( event )
 	
 	--sceneGroup:insert(wall_bot)
 	sceneGroup:insert(world)
-	sceneGroup:insert(firewall)
+	--sceneGroup:insert(firewall)
 
 	sceneGroup:insert(gui)
 	
@@ -1002,8 +1023,8 @@ function scene:show( event )
 		carShape.postCollision = onPostCollision
 		carShape:addEventListener( "postCollision" )
 
-		fireBlock.collision = onFireCollision
-		fireBlock:addEventListener( "collision" )
+		--fireBlock.collision = onFireCollision
+		--fireBlock:addEventListener( "collision" )
 		
 		physics.start()
 
@@ -1017,7 +1038,7 @@ function scene:show( event )
 		
 		Runtime:addEventListener( "enterFrame", onFrame )
 		
-		audio.play(globals.soundTable["check_fire"], {loop=0, channel=30})
+		--audio.play(globals.soundTable["check_fire"], {loop=0, channel=30})
 
 		
 	end

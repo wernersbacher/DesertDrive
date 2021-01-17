@@ -1,6 +1,5 @@
 local M = {}
 
-
 M["dodge"] = {
     name = "dodge",
 
@@ -18,7 +17,7 @@ M["dodge"] = {
     wheelfreq = 3,
 
     maxForwardSpeed = 720,
-    maxAcc = 35,
+    maxAcc = 100,
     max_hp = 5000,
 
     pitch = 1

@@ -17,6 +17,8 @@ NEU 2 01.02.19
 * jump button
 * mute button
 
+* LISTVIEW BEIM RESTART
+
 * reibung und gewichte für besseres spiel
 -> erstmal wieder zurück
 

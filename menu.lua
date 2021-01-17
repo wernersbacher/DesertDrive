@@ -18,12 +18,20 @@ local widget = require "widget"
 local gameMusic = audio.loadStream("sounds/dude.mp3")
 local globals = require("globals")
 
-print(globals["init"])
 --------------------------------------------
 -- FIRST LOADING
 if globals["init"] == nil then
 	globals["init"] = true
 
+	
+	globals["garage"]  = require "cars"
+
+	globals["garage_names"] = {}
+	local i = 1
+	for k, v in pairs(globals["garage"]) do
+		globals["garage_names"][i] = k
+		i = i+1
+    end
 
 	globals["soundTable"] = {
  
@@ -50,6 +58,7 @@ local carChosen = "dodge"
 -- forward declarations and other locals
 local playBtn
 local moneyTxt
+local scrollView
 
 -- 'onRelease' event listener for playBtn
 local function onPlayBtnRelease()
@@ -110,61 +119,134 @@ function scene:create( event )
 	--car.y = display.contentCenterY
 
 	-- Function to handle button events
-	local function handleButtonEvent( event )
+	function handleButtonEvent( event )
 	
-		if ( "ended" == event.phase ) then
+		local phase = event.phase
+ 
+		if ( phase == "moved" ) then
+			local dy = math.abs( ( event.y - event.yStart ) )
+			-- If the touch on the button has moved more than 10 pixels,
+			-- pass focus back to the scroll view so it can continue scrolling
+			if ( dy > 5 ) then
+				scrollView:takeFocus( event )
+			end
+		
+		elseif ( "ended" == phase ) then
 			print(event.target.id)
 			carChosen = event.target.id
 			carText.text = carChosen
 		end
+
+		return true
 	end
 
 	-- BUTTONS
 	
-	local dodgeBtn = widget.newButton(
+	--[[local dodgeBtn = widget.newButton(
 		{
 			id = "dodge",
 			width = 691*f,
 			height = 275*f,
 			defaultFile = "img/car/dodge/car-full.png",
-			label = "button",
 			onEvent = handleButtonEvent
 		}
 	)
-	dodgeBtn.x = -100
-	dodgeBtn.y = display.contentCenterY
-	
-	dodgeBtn:setLabel( "" )
+	--dodgeBtn.x = scrollView.x
+	--dodgeBtn.y = scrollView.y]]
+	 
+	local num = #globals.garage_names
+	local num_cur = 1
+	local car_set = false
+	local scrollTime = 150
 
-	local mustangBtn = widget.newButton(
-		{
-			id = "mustang",
-			width = 691*f,
-			height = 213*f,
-			defaultFile = "img/car/mustang/car-full.png",
-			label = "button",
-			onEvent = handleButtonEvent
-		}
-	)
+	function setCar() 
+		carChosen = globals.garage_names[num-num_cur+1]
+		carText.text = carChosen
+	end
+
+	function scrollLeft()
+		print("pre!")
+
+		local w = dodgeBtn.width + 100
+		transition.to( dodgeBtn, { time=scrollTime, x= dodgeBtn.x - w} )
+		transition.to( mustangBtn, { time=scrollTime, x= mustangBtn.x - w} )
+		transition.to( miniBtn, { time=scrollTime, x= miniBtn.x - w} )
+		
+	end
+
+	function scrollRight() 
+		print("next!")
+		
+		local w = dodgeBtn.width + 100
+		transition.to( dodgeBtn, { time=scrollTime, x= dodgeBtn.x + w} )
+		transition.to( mustangBtn, { time=scrollTime, x= mustangBtn.x + w} )
+		transition.to( miniBtn, { time=scrollTime, x= miniBtn.x + w} )
+	end
+
+	function carScrollListener(event) 
+		local phase = event.phase
+		if ( phase == "moved" ) then
+			local dy =( event.x - event.xStart )
+			-- If the touch on the button has moved more than 10 pixels,
+			-- pass focus back to the scroll view so it can continue scrolling
+			if ( dy < -5 and num_cur < num and car_set == false) then
+				num_cur = num_cur+1
+				car_set = true
+				scrollLeft()
+				setCar()
+			elseif dy > 5 and num_cur >1 and car_set == false then
+				num_cur = num_cur-1
+				car_set = true
+				scrollRight()
+				setCar()
+			end
+		elseif phase == "ended" then
+			car_set = false
+		
+		end
+	 
+		return true
+	end
+
+	scrollView = widget.newScrollView
+	{ 	
+		x = display.contentCenterX,
+		y =  display.contentCenterY,
+		isLocked = true,
+		width = 700,
+		height = 400,
+		scrollWidth = 600,
+		scrollHeight = 800,
+		verticalScrollDisabled = true,
+		hideBackground = false,
+		backgroundColor = { 0.8, 0.8, 0.8, 0.3 },
+		listener = carScrollListener
+	}
+	scrollView.x = display.contentCenterX
+	scrollView.y = display.contentCenterY
+
+
+	dodgeBtn = display.newImageRect("img/car/dodge/car-full.png", 691*f, 275*f)
+	dodgeBtn.id = "dodge"
+	dodgeBtn.x = display.contentCenterX
+	dodgeBtn.y = 200
+	scrollView:insert( dodgeBtn )
+	--sceneGroup:insert( scrollView )
+	
+	
+	mustangBtn = display.newImageRect("img/car/mustang/car-full.png", 691*f, 213*f)
+	mustangBtn.id = "mustang"
 	mustangBtn.x = dodgeBtn.x+dodgeBtn.width + 100
-	mustangBtn.y = display.contentCenterY
+	mustangBtn.y = 200
 	
-	mustangBtn:setLabel( "" )
+	scrollView:insert( mustangBtn )
 
-	local miniBtn = widget.newButton(
-		{
-			id = "mini",
-			width = 558*f,
-			height = 351*f,
-			defaultFile = "img/car/mini/car-full.png",
-			label = "button",
-			onEvent = handleButtonEvent
-		}
-	)
+	miniBtn = display.newImageRect("img/car/mini/car-full.png", 558*f, 351*f)
+	miniBtn.id = "mini"
 	miniBtn.x = mustangBtn.x+mustangBtn.width + 100
-	miniBtn.y = display.contentCenterY
+	miniBtn.y = 200
 	
-	miniBtn:setLabel( "" )
+	scrollView:insert( miniBtn )
 
 	-- BUTTONS ENDE
 	---
@@ -200,9 +282,9 @@ function scene:create( event )
 	sceneGroup:insert( bg_aura )
 	
 	
-	sceneGroup:insert( dodgeBtn )
-	sceneGroup:insert( mustangBtn )
-	sceneGroup:insert(miniBtn)
+
+	--sceneGroup:insert( mustangBtn )
+	--sceneGroup:insert( miniBtn )
 
 	sceneGroup:insert(carText)
 
@@ -220,8 +302,15 @@ function scene:show( event )
 	if phase == "will" then
 		-- Called when the scene is still off screen and is about to move on screen
 
-		audio.setVolume( 0.4, { channel=2 } )
-		audio.play(globals.soundTable.gameMusic,{channel = 2, loops = -1})
+		
+		--dodgeBtn:addEventListener("touch", handleButtonEvent)
+		--dodgeBtn:addEventListener("touch", handleButtonEvent)
+		--miniBtn:addEventListener("touch", handleButtonEvent)
+
+		--audio.setVolume( 0.4, { channel=2 } )
+		--audio.play(globals.soundTable.gameMusic,{channel = 2, loops = -1})
+
+	scrollView.isVisible = true
 
 	elseif phase == "did" then
 		-- Called when the scene is now on screen
@@ -242,7 +331,11 @@ function scene:hide( event )
 		-- e.g. stop timers, stop animation, unload sounds, etc.)
 	elseif phase == "did" then
 		-- Called when the scene is now off screen
+		
 	end	
+	
+	scrollView.isVisible = false
+
 end
 
 function scene:destroy( event )
@@ -255,10 +348,12 @@ function scene:destroy( event )
 	
 	bg_aura._cbe_reserved.destroy()
 
+
 	if playBtn then
 		playBtn:removeSelf()	-- widgets must be manually removed
 		playBtn = nil
 	end
+
 end
 
 ---------------------------------------------------------------------------------
