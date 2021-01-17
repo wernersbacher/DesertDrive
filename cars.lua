@@ -16,8 +16,8 @@ M["dodge"] = {
     wheelaxis = 40,
     wheelfreq = 3,
 
-    maxForwardSpeed = 720,
-    maxAcc = 100,
+    maxForwardSpeed = 3720,
+    maxAcc = 50,
     max_hp = 5000,
 
     pitch = 1

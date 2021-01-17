@@ -5,7 +5,7 @@
 -----------------------------------------------------------------------------------------
 
 
-local funcs = require "math"
+require "math"
 
 local composer = require( "composer" )
 local funcs = require "functions"
@@ -186,10 +186,13 @@ function getCurrentAccel(maxSpeed, currentSpeed)
 
 	-- Formel für Plotter:	1/(e^(0.3*(x-1)))*0.5*(abs(sin(0.8*pi*x))+0.5)
 	
+	
+
 	local e_func = 1 / math.exp(0.3*(x-1))
 	local sinus_func = 0.5*(math.abs(math.sin(0.8*math.pi*x))+0.5)
-
-	return e_func*sinus_func
+	local accel_factor = e_func*sinus_func
+	print(accel_factor)
+	return accel_factor
 
 end
 
@@ -285,15 +288,14 @@ function onFrame()
 
 	-- check if new stage reached
 	-- upgrade
-	if stageTrigger[triggerCounter] ~= nil and stageTrigger[triggerCounter] > 0 and carShape.x > stageTrigger[triggerCounter] then
+--[[ 	if stageTrigger[triggerCounter] ~= nil and stageTrigger[triggerCounter] > 0 and carShape.x > stageTrigger[triggerCounter] then
 		addMoney(100)
 		triggerCounter = triggerCounter +1
-	end
+	end ]]
 
 	-- every 4 frames check hills
 	if(frames % 4 == 0) then
-		checkHills()
-
+		--checkHills()
 		pitchEngine()
 
 --[[ 		if fireBlock.x + 2000 > carShape.x then
@@ -305,6 +307,11 @@ function onFrame()
 	-- score updating
 		score = math.round(carShape.x/ppm)
 		score_text.text =  score.. "m"
+
+		local x, y = carShape:getLinearVelocity()
+		local abs_speed = math.sqrt(x ^ 2 +  y ^ 2)
+
+		speedtxt.text = math.round(abs_speed/ppm).. " m/s"
 	end
 	
 	if frames % 60 == 0 then
@@ -426,6 +433,10 @@ end
 	local nextStageTrigger = 0
 
 function createHill()
+	print("create hills now")
+end
+
+--[[ function createHill()
 	local magicn = rand(1,100)
 	local type ="normal"
 	
@@ -456,12 +467,12 @@ function createHill()
 	newHill.y = spawnY + top_margin
 	physics.addBody( newHill, "static", { outline=imageOutline, bounce=0, friction=1 } )
 	
-	--[[	
+		
 	local bg_hill = display.newPolygon(world, spawnX + left_margin - 20, spawnY + top_margin + 20, imageOutline )
 	bg_hill.anchorX = 0
 	bg_hill.anchorY = 0
 	bg_hill:setFillColor(0.1, 0.2, 0.3)
-	]]
+	
 	
 	local hill_bottom = display.newRect(world, spawnX + left_margin, spawnY + top_margin + hillh-1, hillw, 1024)
 	hill_bottom.anchorX = 0
@@ -481,9 +492,7 @@ function createHill()
 		
 	-- upgrade stage?
 	--print("stage: " .. stage .. " driven: ".. already_driven .. ", carshape.x: ".. carShape.x .. ", stg ende:"..stg.ende)
-	if(stageCount >= stg.count) 
-		
-		then
+	if(stageCount >= stg.count)	then
 		--print ("upgrade stage! "..carShape.x.. " > "..already_driven.. " + " .. stg.width*stg.count .. " - ".. display.actualContentWidth .. " count: ".. stg.count)
 			print("stages insg: ".. #tiles.stages .. ", stage jetzt:" .. stage)
 
@@ -505,11 +514,11 @@ function createHill()
 
 		
 		
-	end
+		end
 
 	stageCount = stageCount + 1
 
-end
+end ]]
 
 function removeHill(i)
 	if(i>0) then
@@ -606,6 +615,7 @@ local function onPostCollision( self, event )
 	--sparksVent.emitY = event.y
 
 		hptxt.text = funcs.round(car_hp) .. " Struktur"
+		
 	end
 end
 
@@ -661,7 +671,7 @@ function scene:create( event )
 	]]
 	carChosen = event.params.carChosen or "dodge"
 
-	-- IMAGE TILES
+--[[ 	-- IMAGE TILES
 	for i = 1, #tiles.stages, 1 do
 
 		local stg = tiles.stages[i]
@@ -679,9 +689,9 @@ function scene:create( event )
 			hill_sheet.special[i] = graphics.newImageSheet( "img/tiles/stage_".. stg.name .."/special.png",  options)
 		end
 
-		--[[
-			LOAD OUTLINES
-		]]
+		
+		--	LOAD OUTLINES
+	
 
 		table.insert(hill_outlines.normal, i, {})
 		for j=1, stg.num, 1 do
@@ -696,7 +706,7 @@ function scene:create( event )
 			end
 		end	
 		
-	end
+	end ]]
 
 
 	-- We need physics started to add bodies, but we don't want the simulaton
@@ -876,7 +886,7 @@ function scene:create( event )
 
 
 
-	-- FIRE 
+--[[ 	-- FIRE 
 
 	local fire_sheet = graphics.newImageSheet( "img/fire.png",  {
 		width = 679,
@@ -894,7 +904,7 @@ function scene:create( event )
 		loopDirection = "bounce"    -- Optional ; values include "forward" or "bounce"
 	}
 
-	local fireSpawn = -1500
+	local fireSpawn = -1500 ]]
 
 --[[ 	fireBlock = display.newRect(world, fireSpawn, -100, 10, 2000)
 	physics.addBody(fireBlock, "kinematic" )
@@ -942,7 +952,12 @@ function scene:create( event )
 	-- MONEY
 
 	moneyTxt = display.newText(gui, "$".. stats.money, 1024, 100, native.systemFont, 54 )
+
+	-- hp bzw. health
 	hptxt = display.newText(gui, car_hp .. " Struktur", 1024, 180, native.systemFont, 44 )
+
+	-- speed
+	speedtxt = display.newText(gui, "0 km/h", 1024, 260, native.systemFont, 44 )
 
 	-- WARNING FIRE
 
@@ -993,10 +1008,8 @@ function scene:create( event )
 	gameover.alpha = 0
 
 
-
-
 	-- create before others
-	checkHills()
+	--checkHills()
 end
 
 
