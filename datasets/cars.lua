@@ -16,7 +16,7 @@ M["dodge"] = {
     wheelaxis = 40,
     wheelfreq = 3,
 
-    maxForwardSpeed = 3720,
+    maxForwardSpeed = 10000,
     maxAcc = 50,
     max_hp = 5000,
 
@@ -41,7 +41,7 @@ M["mini"] = {
     wheelaxis = 40,
     wheelfreq = 3,
 
-    maxForwardSpeed = 760,
+    maxForwardSpeed = 2760,
     maxAcc = 40,
     max_hp = 6000,
 
@@ -65,8 +65,8 @@ M["mustang"] = {
     wheelaxis = 40,
     wheelfreq = 3,
 
-    maxForwardSpeed = 280,
-    maxAcc = 12,
+    maxForwardSpeed = 1280,
+    maxAcc = 20,
     max_hp = 2500,
 
     pitch = 1.4

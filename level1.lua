@@ -11,17 +11,18 @@ local composer = require( "composer" )
 local funcs = require "functions"
 --local storage = require "storage"
 local statMgr = require "stats"
-local tiles = require "tiles"
+local tiles = require "datasets.tiles"
 local scene = composer.newScene()
 local hills = require("levels.lvl1")
 local physics = require "physics"
-local json = require( "json" )
 local globals = require("globals")
-print(globals["test"])
 
 local CBE = require("CBE.CBE")
 
 composer.removeScene("tryagain");
+
+-- game classes
+local carClass = require("classes.car")
 
 -- const
 
@@ -29,25 +30,22 @@ local ppm = 30
 local preLoadNum = 6
 
 
-local _maxSpeed = 720
-local _maxAcc = 35
 local smokeAlpha = 0.11
 local maxFireSpeed = 780
 
--- textes
-
-
 -- game groups
-local car = display.newGroup()
+local carGroup = display.newGroup()
 local wheels = display.newGroup()
 local world = display.newGroup()
 local gui = display.newGroup()
 local gameover = display.newGroup()
-local firewall = display.newGroup()
 
 -- game elements
+local carObject = carClass:Create()
+
 local wheel = {}
-local background, carShape, forward, back, tryagain;
+local background, forward, back, tryagain;
+local car;
 local throttle = 0
 local braking = 0
 
@@ -70,10 +68,6 @@ local stageTrigger = {}
 
 -- timer to stop when leaving scene
 local timerTable = {}
-
--- sound
-local menuSound
-
 
 -- forward declarations and other locals
 local screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
@@ -98,7 +92,7 @@ function goToSc(name)
 		timer.cancel( v )
 	end
 
-	smokeVent._cbe_reserved.destroy()
+	motorSmoke._cbe_reserved.destroy()
 	
 	audio.stop({ channel=1 })
 
@@ -161,7 +155,7 @@ function rotateCar(rotateForward)
 	local f = -1
 	if(rotateForward) then f = 1 end
 
-	carShape.angularVelocity = carShape.angularVelocity+ f*rotateAcc
+	car.angularVelocity = car.angularVelocity+ f*rotateAcc
 end
 
 function getMaxes() 
@@ -263,11 +257,11 @@ function onFrame()
 	
 
 	-- moving the "camera"
-	local deltaX = carShape.x - oldx
-	oldx = carShape.x
+	local deltaX = car.x - oldx
+	oldx = car.x
 
-	local deltaY = carShape.y - oldy
-	oldy = carShape.y
+	local deltaY = car.y - oldy
+	oldy = car.y
 	 -- move fire wall with car height
 --[[ 	fireBlock.y = carShape.y
 	fireEmitter.x = fireBlock.x
@@ -276,13 +270,13 @@ function onFrame()
 	
 
 	world:translate( -deltaX, -deltaY )
-	car:translate( -deltaX, -deltaY )
+	carGroup:translate( -deltaX, -deltaY )
 	-- camera END
 
 	--particle creating (hp)
 	
-	smokeVent.emitX = carShape.x
-	smokeVent.emitY = carShape.y
+	motorSmoke.emitX = car.x
+	motorSmoke.emitY = car.y
 
 	--particle end
 
@@ -305,10 +299,10 @@ function onFrame()
 		end ]]
 
 	-- score updating
-		score = math.round(carShape.x/ppm)
+		score = math.round(car.x/ppm)
 		score_text.text =  score.. "m"
 
-		local x, y = carShape:getLinearVelocity()
+		local x, y = car:getLinearVelocity()
 		local abs_speed = math.sqrt(x ^ 2 +  y ^ 2)
 
 		speedtxt.text = math.round(abs_speed/ppm).. " m/s"
@@ -535,13 +529,13 @@ end
 function checkHills() 
 
 	while(#loaded_elements - preLoadNum < 1 
-		or ( loaded_elements[#loaded_elements-preLoadNum] ~= nil and carShape.x > loaded_elements[#loaded_elements-preLoadNum].x)) do
+		or ( loaded_elements[#loaded_elements-preLoadNum] ~= nil and car.x > loaded_elements[#loaded_elements-preLoadNum].x)) do
 			--print("Create hill ".. #loaded_elements-preLoadNum)
 		createHill()
 	end
 
 	for i=#loaded_elements, 1, -1 do
-		if (loaded_elements[i] ~= nil and carShape.x - loaded_elements[i].x > 3000) then
+		if (loaded_elements[i] ~= nil and car.x - loaded_elements[i].x > 3000) then
 			removeHill(i)
     end
 	end
@@ -599,9 +593,9 @@ local function onPostCollision( self, event )
 		print(alphaFactor)
 		local alpha = smokeAlpha * alphaFactor --(max_hp-car_hp)/max_hp 
 		
-		smokeVent.startAlpha = alpha
-		smokeVent.endAlpha = alpha
-		smokeVent.lifeAlpha = alpha
+		motorSmoke.startAlpha = alpha
+		motorSmoke.endAlpha = alpha
+		motorSmoke.lifeAlpha = alpha
 
 		if car_hp <= 0 then
 			setGameOver()
@@ -631,7 +625,7 @@ function setGameOver()
 	transition.fadeOut( gui, { time=500 } )
 
 	
-	smokeVent.stop()
+	motorSmoke.stop()
 	
 	local gTimer = timer.performWithDelay( 3000, function()  
 		if stillRunning then
@@ -708,6 +702,7 @@ function scene:create( event )
 		
 	end ]]
 
+	
 
 	-- We need physics started to add bodies, but we don't want the simulaton
 	-- running until the scene is on the screen.
@@ -736,6 +731,8 @@ function scene:create( event )
 
 
 	-- CAR
+	carObject:CreateCar()
+
 	carTable = globals.garage[carChosen]
 	local car_scale = carTable.scale --#
 	max_hp, car_hp = carTable.max_hp, carTable.max_hp
@@ -743,16 +740,16 @@ function scene:create( event )
 	
 	local car_image = "img/car/".. carChosen .."/car-body.png" --#
 	local car_outline = graphics.newOutline( 5, car_image)
-	carShape = display.newImageRect(car, car_image, carTable.width*car_scale, carTable.height*car_scale) --#
-	carShape.x = oldx
-	carShape.y = oldy
-	physics.addBody( carShape, "dynamic", { outline = car_outline, friction=0.3, density = 0.005*dens } )
-	carShape.linearDamping = 0.5
+	car = display.newImageRect(carGroup, car_image, carTable.width*car_scale, carTable.height*car_scale) --#
+	car.x = oldx -- basically 0 and content height/2
+	car.y = oldy
+	physics.addBody( car, "dynamic", { outline = car_outline, friction=0.3, density = 0.005*dens } )
+	car.linearDamping = 0.5
 
-	carShape.name = "carShape"
+	car.name = "carShape"
 
-	local carX = carShape.x
-	local carY = carShape.y
+	local carX = car.x
+	local carY = car.y
 	local wheelrad = carTable.wheelrad * carTable.scale --13 --#
 	local wheelXOffRight = carTable.wheelXOffRight * carTable.scale -- 52 --#
 	local wheelYOffRight = carTable.wheelYOffRight * carTable.scale  --27 --#
@@ -767,7 +764,7 @@ function scene:create( event )
 	}
 
 	 --wheel[1] = display.newCircle(car, carX+110, carY+55, 30)
-	 wheel[1] = display.newCircle(car, carX+wheelXOffRight, carY+wheelYOffRight, wheelrad)
+	 wheel[1] = display.newCircle(carGroup, carX+wheelXOffRight, carY+wheelYOffRight, wheelrad)
 	physics.addBody( wheel[1], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad,  } )
 	wheel[1].angularDamping = 1
 	wheel[1].fill = tyre
@@ -775,7 +772,7 @@ function scene:create( event )
 	--wheel[1]:toBack()
 
 	 --wheel[2] = display.newCircle(car, carX-114, carY+60, 30)
-	 wheel[2] = display.newCircle(car, carX-wheelXOffLeft, carY+wheelYOffLeft, wheelrad)
+	 wheel[2] = display.newCircle(carGroup, carX-wheelXOffLeft, carY+wheelYOffLeft, wheelrad)
 	physics.addBody( wheel[2], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad } )
 	wheel[2].angularDamping = 1
 	wheel[2].fill = tyre
@@ -791,13 +788,13 @@ function scene:create( event )
 	local wheelaxis = carTable.wheelaxis
 
 	--front
-	local wheel1Joint = physics.newJoint("wheel", carShape, wheel[1], wheel[1].x, wheel[1].y, 1, wheelaxis);
+	local wheel1Joint = physics.newJoint("wheel", car, wheel[1], wheel[1].x, wheel[1].y, 1, wheelaxis);
 	wheel1Joint.isLimitEnabled = true
 	wheel1Joint.springFrequency = wheelfreq
 	wheel1Joint.springDampingRatio = wheeldamp
 
 	--back
-	local wheel2Joint = physics.newJoint("wheel", carShape, wheel[2], wheel[2].x, wheel[2].y, 1, wheelaxis);
+	local wheel2Joint = physics.newJoint("wheel", car, wheel[2], wheel[2].x, wheel[2].y, 1, wheelaxis);
 	wheel1Joint.isLimitEnabled = true
 	wheel1Joint.springFrequency = wheelfreq
 	wheel1Joint.springDampingRatio = wheeldamp
@@ -816,7 +813,7 @@ function scene:create( event )
 	function start_timer:timer( event )
 		local count = event.count
 		print( "Table listener called " .. count .. " time(s)" )
-		if carShape.x > 1000 then
+		if car.x > 1000 then
 			timer.cancel( event.source ) -- after 3rd invocation, cancel timer
 			
 			wall_bot:removeSelf()
@@ -835,7 +832,7 @@ function scene:create( event )
 
 	-- PARTICLES
 
-	smokeVent = CBE.newVent({
+	motorSmoke = CBE.newVent({
 		--preset = "burn",
 
 		positionType = "inRadius", -- Add a bit of randomness to the position
@@ -855,12 +852,12 @@ function scene:create( event )
 		}
 	})
 
-	car:insert(smokeVent)
+	carGroup:insert(motorSmoke)
 	
-	smokeVent:start()
+	motorSmoke:start()
 
-	smokeVent.emitX = carShape.x
-	smokeVent.emitY = carShape.y
+	motorSmoke.emitX = car.x
+	motorSmoke.emitY = car.y
 	--smokeVent.alpha = 0
 --[[
 	sparksVent = CBE.newVent({
@@ -881,9 +878,9 @@ function scene:create( event )
 	local sTimer = timer.performWithDelay( 100, function() 
 		funcs.printt(sparkGroup)
 		sparkVent._cbe_reserved.destroy()
-	end )]]
+	end )
 	table.insert(timerTable, sTimer)
-
+]]
 
 
 --[[ 	-- FIRE 
@@ -996,7 +993,7 @@ function scene:create( event )
 
 
 
-	sceneGroup:insert(car)
+	sceneGroup:insert(carGroup)
 	
 	--sceneGroup:insert(wall_bot)
 	sceneGroup:insert(world)
@@ -1033,8 +1030,8 @@ function scene:show( event )
 		
 		--carShape.collision = onCarCollision
 		--carShape:addEventListener("collision")
-		carShape.postCollision = onPostCollision
-		carShape:addEventListener( "postCollision" )
+		car.postCollision = onPostCollision
+		car:addEventListener( "postCollision" )
 
 		--fireBlock.collision = onFireCollision
 		--fireBlock:addEventListener( "collision" )

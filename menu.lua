@@ -23,8 +23,7 @@ local globals = require("globals")
 if globals["init"] == nil then
 	globals["init"] = true
 
-	
-	globals["garage"]  = require "cars"
+	globals["garage"]  = require "datasets.cars"
 
 	globals["garage_names"] = {}
 	local i = 1
@@ -43,7 +42,7 @@ if globals["init"] == nil then
 		crash = audio.loadSound("sounds/crash.mp3")
 	}
 
-	globals["_firewall"] = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
+	--globals["_firewall"] = json.decodeFile(system.pathForFile( "particles/fire.json", system.ResourceDirectory )) 
 
 
 end
@@ -61,14 +60,8 @@ local moneyTxt
 local scrollView
 
 -- 'onRelease' event listener for playBtn
-local function onPlayBtnRelease()
-	
-	-- go to level1.lua scene
-	--composer.gotoScene( "level1", "fade", 500 )
-	
-	
-	funcs.goToSc("level1", carChosen)
-	
+local function onPlayBtnRelease()	
+	funcs.goToSc("game", carChosen)
 	return true	-- indicates successful touch
 end
 

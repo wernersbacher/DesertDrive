@@ -1,0 +1,15 @@
+{
+    "Lua.diagnostics.globals": [
+        "audio",
+        "system",
+        "display",
+        "graphics",
+        "native",
+        "Runtime",
+        "timer",
+        "transition"
+    ],
+    "Lua.diagnostics.disable": [
+        "lowercase-global"
+    ]
+}
