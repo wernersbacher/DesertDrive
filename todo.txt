@@ -1,39 +1,8 @@
 TODO
+- https://stackoverflow.com/questions/30826435/position-polygon-accurately-in-corona-sdk-relative-to-known-vertices-issue-i polygon positioning
+- erster wert des vorherigen heightmaps hinzufügen, damit keine kanten entstehen
 
-* audio
-* splash screen
-* upgrades
-* suspension
-* stages
+on retry: delete all objects
 
-NEU
-* button auf ganzen bildschirm tap bereich
-
-NEU 2 01.02.19
-* coins spawn
-* bessere leveldesign
-* mehr töne
---* kamera ändern
-* jump button
-* mute button
-
-* LISTVIEW BEIM RESTART
-
-* reibung und gewichte für besseres spiel
--> erstmal wieder zurück
-
-* explosion
-* preload weniger, bzw nach größe gucken -> alle tiles größer machen
-
-particles
-* explosion kaputt
-* sparks
-* himmel
-
-langfristig
-* bessere physik
-* upgrades
-* autos
-* level
-* jeden tag neues level
-* items
+REFACTOR:
+constanten groß schrieben

@@ -1,5 +1,4 @@
 
-
 oldx = 0
 oldy = display.actualContentHeight/2
 
@@ -66,8 +65,6 @@ end
 
 
 function go(event)
-
-	print("clicked on go")
     
     -- gets called when the gas pedal gets pressed
 	local phase = event.phase

@@ -36,6 +36,7 @@ score = 0
 screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
 spawnX = halfW
 spawnY = screenH / 5 *4
+spawnXStartBottom = display.screenOriginX
 spawnXCar = 0
 spawnYCar = display.actualContentHeight/2
 
@@ -49,6 +50,7 @@ require("gameover")
 require("background")
 require("events")
 require("sound")
+require("terrain")
 require("world")
 require("particles")
 require("collisions")
@@ -75,7 +77,7 @@ function scene:create( event )
 	physics.setScale( ppm )
 	physics.setGravity( 0, 28 )
 	physics.pause()
-	--physics.setDrawMode("hybrid")
+	physics.setDrawMode("hybrid")
 
     -- BACKGROUND CREATION
     initBackground()
@@ -86,7 +88,7 @@ function scene:create( event )
 
     -- START BOTTOM
 
-    initStartBottom()
+    initWorld()
 
 	-- SOUNDS
 
@@ -110,7 +112,7 @@ function scene:create( event )
 
 
 	-- create before others
-	--checkHills()
+	refreshHills()
 end
 
 

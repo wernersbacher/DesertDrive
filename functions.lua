@@ -34,7 +34,7 @@ local function topMarginRight(outlines, rightpx, maxhigh)
     end
 end
 
-local function topMarginLeft(outlines, rightpx, maxhigh) 
+local function topMarginLeft(outlines, maxhigh)
     local max = 0;
     local maxtrigger = true
     for i = 1, #outlines, 2 do -- wenn wir auf de rrichtigen breite sind und der nächste wert höhere als max ist
