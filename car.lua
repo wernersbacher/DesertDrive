@@ -8,7 +8,7 @@ function rotateCar(rotateForward)
 	local f = -1
 	if(rotateForward) then f = 1 end
 
-	car.angularVelocity = car.angularVelocity+ f*rotateAcc
+	--car.angularVelocity = car.angularVelocity+ f*rotateAcc
 end
 
 function getMaxes()
@@ -23,42 +23,11 @@ function getMaxes()
 	return M
 end
 
-function getCurrentAccel(maxSpeed, currentSpeed)
-
-	-- static
-
-	-- Skala von 1 bis auf x achse, 10 entspricht 100 des topspeeds
-	-- Die ausgabe ist der prozentuale wert in dezimal der maximalen accel, die genutzt werden darf
-
-	local x = 10 * currentSpeed/maxSpeed
-
-	-- Formel für Plotter:	1/(e^(0.3*(x-1)))*0.5*(abs(sin(0.8*pi*x))+0.5)
-
-	local e_func = 1 / math.exp(0.3*(x-1))
-	local sinus_func = 0.5*(math.abs(math.sin(1.5*math.pi*x))+0.5)
-	local accel_factor = e_func*sinus_func
-	return accel_factor
-
-end
-
 function accel()
 	--gas geben
-	local max = getMaxes()
-	local maxSpeed = max.maxForwardSpeed
-    local maxAcceleration = max.maxForwardAccel
-    
-	for i = 1,2,1 do
-        local speed = wheel[i].angularVelocity
-        local transmission = getCurrentAccel(maxSpeed, speed)
-        local accel = transmission * maxAcceleration
-        
-		if(speed+accel > maxSpeed) then
-			wheel[i].angularVelocity = maxSpeed
-		else
-			wheel[i].angularVelocity = speed+accel
-		end
-	
-	end
+    local drive_torque = getDriveTorqueFromRpm()
+    --print("torque: "..drive_torque)
+    wheel[2]:applyTorque(drive_torque)
 
 end
 
@@ -83,6 +52,10 @@ function motorbreak()
 	decel(-1, 0)
 end
 
+function getWheelRpm()
+    return wheel[2].angularVelocity/360
+end
+
 --[[ 
     CAR SETUP
  ]]
@@ -100,7 +73,6 @@ function initCar(carChosen)
     carTable = globals.garage[carChosen]
     car_scale = carTable.scale --#
     max_hp, car_hp = carTable.max_hp, carTable.max_hp
-    dens = carTable.dens
 
     local car_image = "img/car/".. carChosen .."/car-body.png" --#
     local car_outline = graphics.newOutline( 5, car_image)
@@ -108,8 +80,8 @@ function initCar(carChosen)
     car = display.newImageRect(carGroup, car_image, carTable.width*car_scale, carTable.height*car_scale) --#
     car.x = spawnXCar -- basically 0 and content height/2
     car.y = spawnYCar
-    physics.addBody( car, "dynamic", { outline = car_outline, friction=0.3, density = 0.005*dens } )
-    car.linearDamping = 0.5
+    physics.addBody( car, "dynamic", { outline = car_outline, friction=0.3, density = carTable.bodyDens } )
+    car.linearDamping = carTable.linearDamping
 
     car.name = "carShape"
 
@@ -131,7 +103,7 @@ function initCar(carChosen)
     wheel = {}
     --wheel[1] = display.newCircle(car, carX+110, carY+55, 30)
     wheel[1] = display.newCircle(carGroup, carX+wheelXOffRight, carY+wheelYOffRight, wheelrad)
-    physics.addBody( wheel[1], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad,  } )
+    physics.addBody( wheel[1], "dynamic", {density = carTable.wheelDens, bounce = 0.1, friction=carTable.wheelFriction, radius=wheelrad,  } )
     wheel[1].angularDamping = 1
     wheel[1].fill = tyre
     wheel[1].name = "tyre"
@@ -139,7 +111,7 @@ function initCar(carChosen)
 
     --wheel[2] = display.newCircle(car, carX-114, carY+60, 30)
     wheel[2] = display.newCircle(carGroup, carX-wheelXOffLeft, carY+wheelYOffLeft, wheelrad)
-    physics.addBody( wheel[2], "dynamic", {density = 0.05*dens,  bounce = 0.1, friction=10, radius=wheelrad } )
+    physics.addBody( wheel[2], "dynamic", {density = carTable.wheelDens, bounce = 0.1, friction=carTable.wheelFriction, radius=wheelrad } )
     wheel[2].angularDamping = 1
     wheel[2].fill = tyre
     wheel[1].name = "tyre"
@@ -165,6 +137,7 @@ function initCar(carChosen)
     wheel2Joint.springFrequency = wheelfreq
     wheel2Joint.springDampingRatio = wheeldamp
 
+    initEngine()
 
 end
 

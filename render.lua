@@ -1,13 +1,19 @@
-
 oldx = 0
 oldy = display.actualContentHeight/2
 
 frames = 0
 seconds = 0
 
+
 function initRenderOptions()
 	oldx = spawnXCar
 	oldy = spawnYCar
+
+	world.xScale = ZOOM
+	world.yScale = ZOOM
+
+	carGroup.xScale = ZOOM
+	carGroup.yScale = ZOOM
 
 	frames = 0
 	seconds = 0
@@ -33,8 +39,8 @@ function onFrame()
 
 	local deltaY = car.y - oldy
 	oldy = car.y
-	world:translate( -deltaX, -deltaY )
-	carGroup:translate( -deltaX, -deltaY )
+	world:translate( -deltaX*ZOOM, -deltaY *ZOOM)
+	carGroup:translate( -deltaX*ZOOM, -deltaY *ZOOM)
 	-- camera END
 
 	motorSmoke.emitX = car.x
@@ -42,16 +48,30 @@ function onFrame()
 
 	--particle end
 
-	-- every 4 frames check hills
-	if(frames % 10 == 0) then
+	-- update engine
+	refreshEngine()
+
+	print(getWheelRpm())
+
+	-- every 17 frames check hills
+	if(frames % 17 == 0) then
 		refreshHills()
+	end
+	
+	if(frames % 10 == 0) then
 		pitchEngine()
 
-	-- score updating
+		-- score updating
 		score = funcs.round(car.x/ppm)
 		score_text.text =  score.. "m"
 
 		speedtxt.text = funcs.round(getSpeedms()*3.6).. " km/h"
+
+		-- rpm updating
+		rpmtxt.text = funcs.round(funcs.round(rpm)).. " rpm"
+
+		-- gear updating
+		geartxt.text = "Gang "..currentGear
 	end
 
 	if frames % 60 == 0 then

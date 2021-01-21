@@ -20,6 +20,9 @@ statMgr = require "stats"
 
 -- convert between pixels and meters
 ppm = 30
+GRAVITY = 60
+
+ZOOM = 0.25
 
 -- button states
 throttle = 0
@@ -33,17 +36,18 @@ stopped = false
 score = 0
 
 -- forward declarations and other locals
-screenW, screenH, halfW = display.actualContentWidth, display.actualContentHeight, display.contentCenterX
+screenW, screenH, halfW = display.actualContentWidth/ZOOM, display.actualContentHeight/ZOOM, display.contentCenterX/ZOOM
 spawnX = halfW
 spawnY = screenH / 5 *4
 spawnXStartBottom = display.screenOriginX
 spawnXCar = 0
-spawnYCar = display.actualContentHeight/2
+spawnYCar = display.actualContentHeight/(2*ZOOM)
 
 
 require("groups")
 initGroups()
 require("eco")
+require("engine")
 require("car")
 require("ui")
 require("gameover")
@@ -75,9 +79,9 @@ function scene:create( event )
 	-- running until the scene is on the screen.
 	physics.start()
 	physics.setScale( ppm )
-	physics.setGravity( 0, 28 )
+	physics.setGravity( 0, GRAVITY )
 	physics.pause()
-	physics.setDrawMode("hybrid")
+	--physics.setDrawMode("hybrid")
 
     -- BACKGROUND CREATION
     initBackground()

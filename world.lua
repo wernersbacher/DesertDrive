@@ -4,14 +4,14 @@
 loaded_hills = {}
 wall_bot = nil
 
-START_BOTTOM_WIDTH = 1000
+START_BOTTOM_WIDTH = 1000/ZOOM
 NUMBER_OF_HEIGHT_POINTS = 30
 MIN_HEIGHT_VALUE = -150
-MAX_HEIGHT_VALUE = 110
-HEIGHTPOINT_WIDTH = 300
-HILL_DEPTH = 1000
+MAX_HEIGHT_VALUE = 200
+HEIGHTPOINT_WIDTH = 400
+HILL_DEPTH = 1000/ZOOM
 
-PRELOAD_HILL_NUM = 4
+PRELOAD_HILL_NUM = 5
 
 local hill_margin_left = 0 -- to calculate the coordinate
 local hill_margin_top = 0
@@ -89,7 +89,7 @@ function initWorld()
 	hill_margin_left = 0
 	hill_margin_top = 0
 
-	wall_bot = display.newRect(world, spawnXStartBottom, spawnY, START_BOTTOM_WIDTH, 1000)
+	wall_bot = display.newRect(world, spawnXStartBottom, spawnY, START_BOTTOM_WIDTH, HILL_DEPTH)
 
 	wall_bot.anchorX = 0
 	wall_bot.anchorY = 0

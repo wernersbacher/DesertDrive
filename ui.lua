@@ -10,6 +10,8 @@ highscore_text = nil
 moneyTxt = nil
 hptxt = nil
 speedtxt = nil
+rpmtxt = nil
+geartxt = nil
 
 function initUIButtons()
     local butScale = 0.9
@@ -50,4 +52,11 @@ function initUIButtons()
 
     -- speed
     speedtxt = display.newText(gui, "0 km/h", 1024, 260, native.systemFont, 44 )
+
+    -- rpm
+    rpmtxt = display.newText(gui, "2000 rpm", 400, 900, native.systemFont, 44 )
+    
+    -- gear
+    geartxt = display.newText(gui, "Gang 1", 630, 900, native.systemFont, 44 )
+    
 end
