@@ -174,6 +174,7 @@ function scene:destroy( event )
 	-- 
 	-- INSERT code here to cleanup the scene
 	-- e.g. remove display objects, remove touch listeners, save state, etc.
+	removeHills()
 	local sceneGroup = self.view
 	
 	package.loaded[physics] = nil

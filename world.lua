@@ -5,13 +5,13 @@ loaded_hills = {}
 wall_bot = nil
 
 START_BOTTOM_WIDTH = 1000
-NUMBER_OF_HEIGHT_POINTS = 10
+NUMBER_OF_HEIGHT_POINTS = 30
 MIN_HEIGHT_VALUE = -150
 MAX_HEIGHT_VALUE = 110
-HEIGHTPOINT_WIDTH = 200
+HEIGHTPOINT_WIDTH = 300
 HILL_DEPTH = 1000
 
-PRELOAD_HILL_NUM = 5
+PRELOAD_HILL_NUM = 4
 
 local hill_margin_left = 0 -- to calculate the coordinate
 local hill_margin_top = 0
@@ -70,6 +70,12 @@ function refreshHills()
 	end
 end
 
+function removeHills()
+	-- remove all hils
+	for i=#loaded_hills, 1, -1 do
+		removeHill(i)
+	end
+end
 
 function getHillWidth()
 	return (NUMBER_OF_HEIGHT_POINTS-1)*HEIGHTPOINT_WIDTH

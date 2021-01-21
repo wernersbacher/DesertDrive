@@ -3,8 +3,8 @@
 	DRIVING FUNCTIONS
 ]]
 
-function rotateCar(rotateForward) 
-	local rotateAcc = 12
+function rotateCar(rotateForward)
+	local rotateAcc = getMaxes().maxRotationSpeed
 	local f = -1
 	if(rotateForward) then f = 1 end
 
@@ -13,7 +13,8 @@ end
 
 function getMaxes()
 	local f = 5
-	local M = {}
+    local M = {}
+    M["maxRotationSpeed"] = carTable.maxRotationSpeed
 	M["maxForwardSpeed"] = carTable.maxForwardSpeed * f
 	M["maxForwardAccel"] = carTable.maxAcc * f
 	M["maxBackwardSpeed"] = -360 * 3
@@ -50,11 +51,6 @@ function accel()
         local speed = wheel[i].angularVelocity
         local transmission = getCurrentAccel(maxSpeed, speed)
         local accel = transmission * maxAcceleration
-
-        if i == 1 then
-
-            --log_file:write(funcs.round(accel), "\n")
-        end
         
 		if(speed+accel > maxSpeed) then
 			wheel[i].angularVelocity = maxSpeed
