@@ -7,7 +7,7 @@ wall_bot = nil
 START_BOTTOM_WIDTH = 1000
 NUMBER_OF_HEIGHT_POINTS = 10
 MIN_HEIGHT_VALUE = -150
-MAX_HEIGHT_VALUE = 150
+MAX_HEIGHT_VALUE = 110
 HEIGHTPOINT_WIDTH = 200
 HILL_DEPTH = 1000
 
@@ -19,7 +19,7 @@ local hill_margin_top = 0
 function createHill()
 	print("create hills now")
 
-	hill_margin_top = hill_margin_top + getLastHillHeight()
+	hill_margin_top = hill_margin_top
 
 	-- vertices
 	local vertices = generateHillVertices()
@@ -35,7 +35,7 @@ function createHill()
 
 	-- body
 	physics.addBody( new_hill, "static", { outline=vertices, bounce=0.1, friction=1 } )
-    wall_bot:setFillColor(80/255,80/255,80/255)
+    new_hill:setFillColor(80/255,80/255,80/255)
 
 	hill_margin_left = hill_margin_left + getHillWidth()
 	
@@ -63,7 +63,8 @@ function refreshHills()
 	end
 
 	for i=#loaded_hills, 1, -1 do
-		if (loaded_hills[i] ~= nil and car.x - loaded_hills[i].x > 3000) then
+		if (loaded_hills[i] ~= nil and car.x - loaded_hills[i].x > getHillWidth() + 3000) then
+			print("remove hill "..i)
 			removeHill(i)
    		end
 	end

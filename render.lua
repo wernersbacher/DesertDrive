@@ -43,8 +43,8 @@ function onFrame()
 	--particle end
 
 	-- every 4 frames check hills
-	if(frames % 4 == 0) then
-		--checkHills()
+	if(frames % 10 == 0) then
+		refreshHills()
 		pitchEngine()
 
 	-- score updating
@@ -60,7 +60,7 @@ function onFrame()
 
     end
 
-	frames = frames + 1
+	frames = (frames + 1) % 10000
 end
 
 
