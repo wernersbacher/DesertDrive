@@ -10,15 +10,15 @@ function generateHeightMap()
     -- generates a random heightmap with 0 as first and last values
     -- workaround because otherwise the shapes are misaligned
     local temp_map = {0}
-	for i=1,NUMBER_OF_HEIGHT_POINTS-2 do
+	for i=1,NUMBER_OF_HEIGHT_POINTS-1 do
 		randomHeight = math.random(0, MAX_HEIGHT_VALUE)
         table.insert(temp_map, randomHeight)
     end
-    table.insert(temp_map, 0)
+    --table.insert(temp_map, 0)
 
     local smoothed_map = smoothHeightmap(temp_map)
     smoothed_map[1] = 0
-    smoothed_map[#smoothed_map-1] = 0
+    --smoothed_map[#smoothed_map-1] = 0
 
 	return smoothed_map
 end
@@ -64,7 +64,7 @@ function generateHillVertices()
     local heightmap = generateHeightMap()
     
     --heightmap[1] = 0 --set to zero again
-    lastHillHeight = heightmap[#heightmap] -- save the last hill height for next hills
+    lastHillHeight = heightmap[#heightmap-1] -- save the last hill height for next hills
     local vertices = mergeTables(hill_x_points, heightmap)
     
 	-- bottom right corner

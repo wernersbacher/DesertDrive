@@ -18,7 +18,7 @@ local hill_margin_top = 0
 function createHill()
 	print("create hills now")
 
-	hill_margin_top = hill_margin_top
+	hill_margin_top = hill_margin_top + getLastHillHeight()
 
 	-- vertices
 	local vertices = generateHillVertices()
@@ -44,7 +44,7 @@ end
 
 
 function removeHill(i)
-	if(i>0) then
+	if(i>0 and loaded_hills[i] ~= nil) then
 		loaded_hills[i]:removeSelf()
 		loaded_hills[i] = nil
 		if(loaded_hills[i] ~= nil) then

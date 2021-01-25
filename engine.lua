@@ -11,7 +11,7 @@ rpm = 0
 
 -- CAR CONSTANTS
 WHEELRPMFACTOR = 10
-TORQUEFACTOR = 0.04
+TORQUEFACTOR = 0.34
 maxrpm = 6500
 minrpm = 900
 kennlinie = {[0]=60, [1000]=90,  [3000]=130, [4000]=180, [5000]=160, [6000]=120, [6500]=20, [10000] = 0}
