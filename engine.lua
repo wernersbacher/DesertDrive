@@ -10,9 +10,11 @@ currentGear = 1
 rpm = 0
 
 -- CAR CONSTANTS
+WHEELRPMFACTOR = 10
+TORQUEFACTOR = 0.04
 maxrpm = 6500
 minrpm = 900
-kennlinie = {[0]=10, [1000]=60,  [3000]=130, [4000]=180, [5000]=160, [6000]=120, [6500]=20, [10000] = 0}
+kennlinie = {[0]=60, [1000]=90,  [3000]=130, [4000]=180, [5000]=160, [6000]=120, [6500]=20, [10000] = 0}
 gears = {[0]=3.42, [-1]=2.9, [1]=2.66, [2]=1.78, [3]=1.3, [4]=1.0, [5]=0.74, [6]=0.5}
 gearNum = 6
 transmission_efficiency = 0.7
@@ -30,7 +32,11 @@ function getEngineTorque(currentrpm)
 	table.sort(tkeys)
 	-- use the keys to retrieve the values in the sorted order
 	for ix, rpmval in ipairs(tkeys) do 
-		--print(ix, rpm, kennlinie[rpm])
+		-- catch big rpms
+		if tkeys[ix+1] == nil then
+			return 0
+		end
+	
 		if currentrpm >= rpmval and currentrpm < tkeys[ix+1] then
 			local rpm2 = tkeys[ix+1]
 			local mu = (currentrpm - rpmval) / (rpm2 - rpmval)
@@ -42,6 +48,7 @@ function getEngineTorque(currentrpm)
 		end
 		
 	end
+	
 
 end
 
@@ -52,7 +59,7 @@ end
 
 
 function getEngineRpmFromWheelRpm(currentGear, currentWheelRpm) 
-	rpm = currentWheelRpm * gears[currentGear] * gears[0] * 60 * 2 
+	rpm = WHEELRPMFACTOR * currentWheelRpm * gears[currentGear] * gears[0] * 60 / (2 * math.pi)
 	if rpm < minrpm then
 		return minrpm
 	end
@@ -75,7 +82,7 @@ end
 function getDriveTorqueFromRpm()
 	local raw_torque = getEngineTorque(rpm)
 	local drive_torque = getDriveTorque(raw_torque, currentGear)
-    return drive_torque*5
+    return drive_torque * TORQUEFACTOR
 end
 
 function refreshEngine()

@@ -1,12 +1,7 @@
 
-function pitchEngine() 
-	
-	local max = getMaxes()
-	local max = max.maxForwardSpeed
-	--local acceleration = max.maxForwardAccel
-	local cur = math.min( math.abs(wheel[1].angularVelocity), max) -- entweder absolut wert von current, aber höchstens max
-	
-	local pitch = 0.9 + 0.8*(cur/max)
+function pitchEngine()
+
+	local pitch = 0.9 + 0.8*(rpm/6000)
 
 	al.Source(enginePitch, al.PITCH, pitch)
 end

@@ -7,7 +7,8 @@
         "native",
         "Runtime",
         "timer",
-        "transition"
+        "transition",
+        "al"
     ],
     "Lua.diagnostics.disable": [
         "lowercase-global"

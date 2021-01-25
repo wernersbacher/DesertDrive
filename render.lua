@@ -51,8 +51,6 @@ function onFrame()
 	-- update engine
 	refreshEngine()
 
-	print(getWheelRpm())
-
 	-- every 17 frames check hills
 	if(frames % 17 == 0) then
 		refreshHills()

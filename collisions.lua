@@ -9,14 +9,19 @@ function onCarCollision(self, event)
 end
 
 local crashFrameNum = 0
+local SMOKE_ALPHA = 0.3
+local COLLISION_THRESHOLD = 10
+
 function onPostCollision( self, event )
 	if gameoverStatus then
-		return 
+		print("already gameover")
+		return
 	end
 	--car_hp
-	if ( event.force > 35.0 and event.other.name ~= nil and event.other.name == "hill") then
-		--print( "force: " .. event.force )
-		--print( "friction: " .. event.friction )
+	if ( event.force > COLLISION_THRESHOLD and event.other.name ~= nil and event.other.name == "hill") then
+
+		print( "force: " .. event.force )
+		print( "friction: " .. event.friction )
 
 		-- generate sound
 		if(crashFrameNum + 30 < frames) then
@@ -29,7 +34,7 @@ function onPostCollision( self, event )
 		local f = 10000/max_hp -- wenn weniger hp da sind, muss der wert skaliert werden
 		local alphaFactor = 0.0014* 1.0007^((max_hp-car_hp)*f)
 		print(alphaFactor)
-		local alpha = smokeAlpha * alphaFactor --(max_hp-car_hp)/max_hp 
+		local alpha = SMOKE_ALPHA * alphaFactor --(max_hp-car_hp)/max_hp 
 		
 		motorSmoke.startAlpha = alpha
 		motorSmoke.endAlpha = alpha

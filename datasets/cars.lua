@@ -5,9 +5,9 @@ M["dodge"] = {
 
     width = 691,
     height = 194,
-    scale = 1.4,
-    bodyDens = 0.025,
-    wheelDens = 0.04,
+    scale = 0.3,
+    bodyDens = 0.15,
+    wheelDens = 0.45,
     wheelrad = 28 * 2,
     wheelXOffRight = 110 * 2,
 	wheelYOffRight = 55 * 2,
@@ -19,7 +19,7 @@ M["dodge"] = {
     linearDamping = 0.1,
     wheelFriction = 5,
 
-    maxRotationSpeed = 5,
+    maxRotationSpeed = 10,
     maxForwardSpeed = 10000,
     maxAcc = 50,
     max_hp = 5000,

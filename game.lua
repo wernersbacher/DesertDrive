@@ -20,9 +20,9 @@ statMgr = require "stats"
 
 -- convert between pixels and meters
 ppm = 30
-GRAVITY = 60
+GRAVITY = 30
 
-ZOOM = 0.25
+ZOOM = 1
 
 -- button states
 throttle = 0

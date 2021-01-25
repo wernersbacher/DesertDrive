@@ -4,11 +4,13 @@
 ]]
 
 function rotateCar(rotateForward)
+
+    -- todo only rotate mid air
 	local rotateAcc = getMaxes().maxRotationSpeed
 	local f = -1
 	if(rotateForward) then f = 1 end
 
-	--car.angularVelocity = car.angularVelocity+ f*rotateAcc
+	car.angularVelocity = car.angularVelocity + f*rotateAcc
 end
 
 function getMaxes()
@@ -26,7 +28,6 @@ end
 function accel()
 	--gas geben
     local drive_torque = getDriveTorqueFromRpm()
-    --print("torque: "..drive_torque)
     wheel[2]:applyTorque(drive_torque)
 
 end
@@ -147,5 +148,5 @@ function getSpeedRaw()
 end
 
 function getSpeedms()
-    return getSpeedRaw()/(5*ppm)
+    return getSpeedRaw()/(2*ppm)
 end

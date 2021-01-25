@@ -6,12 +6,11 @@ wall_bot = nil
 
 START_BOTTOM_WIDTH = 1000/ZOOM
 NUMBER_OF_HEIGHT_POINTS = 30
-MIN_HEIGHT_VALUE = -150
-MAX_HEIGHT_VALUE = 200
-HEIGHTPOINT_WIDTH = 400
+MAX_HEIGHT_VALUE = 300
+HEIGHTPOINT_WIDTH = 100
 HILL_DEPTH = 1000/ZOOM
 
-PRELOAD_HILL_NUM = 5
+PRELOAD_HILL_NUM = 10
 
 local hill_margin_left = 0 -- to calculate the coordinate
 local hill_margin_top = 0
@@ -30,6 +29,7 @@ function createHill()
 
 	-- hill creation
 	local new_hill = display.newPolygon(world, x, y, vertices)
+	new_hill.name = "hill"
 --[[ 	new_hill.anchorX = 0
 	new_hill.anchorY = 0 ]]
 

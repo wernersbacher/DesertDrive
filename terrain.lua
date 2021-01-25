@@ -25,7 +25,7 @@ end
 
 function smoothHeightmap(heightmap)
 
-    local SCAN_RADIUS = 1
+    local SCAN_RADIUS = 3
 
     for i=0, NUMBER_OF_HEIGHT_POINTS do
         

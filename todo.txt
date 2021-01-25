@@ -1,8 +1,4 @@
 TODO
-- https://stackoverflow.com/questions/30826435/position-polygon-accurately-in-corona-sdk-relative-to-known-vertices-issue-i polygon positioning
-- erster wert des vorherigen heightmaps hinzufügen, damit keine kanten entstehen
 
-on retry: delete all objects
-
-REFACTOR:
-constanten groß schrieben
+rückwärts fahren verbieten
+set up other cars
